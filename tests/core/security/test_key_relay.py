@@ -347,6 +347,28 @@ def test_stopping_forgets_the_tokens_and_the_next_use_starts_again(
     assert call(RelayAccess(second.base_url, first.token))[0] == 401  # the old token is gone
 
 
+def test_a_relay_started_again_at_once_has_one_watcher_only() -> None:
+    """Before, the watcher of a stopped relay could miss its stop when the next one started at
+    once, and two watchers then ran."""
+
+    def watchers() -> int:
+        return sum(thread.name == "key-relay-idle" for thread in threading.enumerate())
+
+    before = watchers()
+    relay = KeyRelay(check_seconds=3600)
+    try:
+        for _ in range(5):
+            relay.access(FakeProviderless(), KEY)
+            relay.stop()
+        relay.access(FakeProviderless(), KEY)
+        deadline = time.monotonic() + 5
+        while watchers() > before + 1 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert watchers() == before + 1
+    finally:
+        relay.stop()
+
+
 def test_the_relay_stops_after_a_time_without_requests() -> None:
     now = [0.0]
     relay = KeyRelay(idle_seconds=600, check_seconds=3600, clock=lambda: now[0])

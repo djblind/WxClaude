@@ -35,7 +35,9 @@ other. Clients that arrive at the very same moment can find the pipe **busy** fo
 milliseconds (`ERROR_PIPE_BUSY`; `open` of Python reports it as `errno 22`): a client waits and
 tries again, as `NamedPipeClientStream.Connect(timeout)` of .NET does by itself. If the window does not run a command within
 5 seconds (a dialog is open and blocks it, for example) the client gets `timeout` and the command
-is not run afterwards, so trying again does not do it twice.
+is not run afterwards, so trying again does not do it twice. A command the window starts before
+those 5 seconds are over is waited for, however long it takes, and the client gets its real answer:
+`timeout` always means that nothing was done.
 
 There is no key and no handshake: this is what lets a script in any language use the pipe. The
 rights of the pipe are the default ones of Windows (a pipe made without a security descriptor): by

@@ -28,11 +28,35 @@ DEFAULT_WAIT_SECONDS = 5.0
 
 @dataclass(slots=True)
 class _Call:
-    """One request waiting for the interface thread."""
+    """One request waiting for the interface thread.
+
+    ``started`` and ``cancelled`` change under ``lock`` only: either the interface thread starts
+    the request, or the thread of the pipe gives up on it, never both.
+    """
 
     done: threading.Event = field(default_factory=threading.Event)
+    lock: threading.Lock = field(default_factory=threading.Lock)
     response: dict[str, object] | None = None
+    started: bool = False
     cancelled: bool = False
+
+    def start(self) -> bool:
+        """The interface thread takes the request; False if the client was already told
+        ``timeout``."""
+        with self.lock:
+            if self.cancelled:
+                return False
+            self.started = True
+            return True
+
+    def cancel(self) -> bool:
+        """The thread of the pipe gives up; False if the request has already started (its
+        answer is then waited for)."""
+        with self.lock:
+            if self.started:
+                return False
+            self.cancelled = True
+            return True
 
 
 class RemoteEndpoint:
@@ -61,7 +85,7 @@ class RemoteEndpoint:
         call = _Call()
 
         def run() -> None:
-            if call.cancelled:
+            if not call.start():
                 return
             try:
                 call.response = self._execute(request)
@@ -69,7 +93,9 @@ class RemoteEndpoint:
                 call.done.set()  # also when execute failed: the client is not left waiting
 
         self._run_in_ui(run)
-        if not call.done.wait(self._wait_seconds):
-            call.cancelled = True
+        if not call.done.wait(self._wait_seconds) and call.cancel():
             return failure(ErrorCode.TIMEOUT)
+        # Started just in time: what it does is done, so the client gets its real answer (the
+        # commands run on the interface thread are quick once they start).
+        call.done.wait()
         return call.response if call.response is not None else failure(ErrorCode.INTERNAL)

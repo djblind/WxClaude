@@ -80,6 +80,8 @@ class KeyRelay:
         self._clock = clock
         self._lock = threading.RLock()
         self._server: _Server | None = None
+        # Set when the running relay stops. Each start has its own: the watcher of a relay that
+        # stopped cannot miss it because a new relay started at once (``_watch``).
         self._stopped = threading.Event()
         self._routes: dict[str, _Route] = {}  # by token
         self._tokens: dict[str, str] = {}  # the token of each provider (by id)
@@ -162,16 +164,22 @@ class KeyRelay:
         server.daemon_threads = True
         server.relay = self  # type: ignore[attr-defined]
         self._server = server
-        self._stopped.clear()
-        for target, name, options in (
-            (server.serve_forever, "key-relay", {"poll_interval": 0.2}),
-            (self._watch, "key-relay-idle", {}),
-        ):
-            threading.Thread(target=target, kwargs=options, daemon=True, name=name).start()
+        stopped = threading.Event()
+        self._stopped = stopped
+        threading.Thread(
+            target=server.serve_forever,
+            kwargs={"poll_interval": 0.2},
+            daemon=True,
+            name="key-relay",
+        ).start()
+        threading.Thread(
+            target=self._watch, args=(stopped,), daemon=True, name="key-relay-idle"
+        ).start()
         return server
 
-    def _watch(self) -> None:
-        while not self._stopped.wait(self._check_seconds):
+    def _watch(self, stopped: threading.Event) -> None:
+        """Stop the relay once idle; ends with the relay it was started for (``stopped``)."""
+        while not stopped.wait(self._check_seconds):
             self.expire_if_idle()
 
     def _stop_locked(self) -> None:

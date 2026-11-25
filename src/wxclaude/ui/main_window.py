@@ -377,7 +377,7 @@ class MainWindow(wx.Frame):
             pipe,
             RemoteLinks(
                 has_conversation=lambda: self._conversations.has_conversation,
-                busy=lambda: self._run.busy,
+                busy=lambda: self._run.busy or self._conversations.renaming,
                 answering=lambda: self._run.answering,
                 interrupt=lambda: self._run.interrupt(),
                 send=lambda text: self._run.start(text, self.agent_for(alternative=False)),

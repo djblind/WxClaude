@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import wx
 from main_window_support import (
+    _runner,
     _session,
     _settings,
     _wait_until_idle,
@@ -103,7 +104,7 @@ def test_a_loaded_conversation_puts_the_focus_on_my_last_message(
     _session(claude_config, tmp_path, prompt="Last question")
     settings = _settings(tmp_path / "config" / "settings.json")
     settings.last_workspace = str(tmp_path)
-    window = MainWindow(settings)  # at startup
+    window = MainWindow(settings, _runner())  # at startup
     try:
         assert window._conversation.HasFocus()
         assert window._conversation.GetInsertionPoint() == _last_prompt_start(window)

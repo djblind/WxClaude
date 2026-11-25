@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import IO
 
+from wxclaude.core.claude.cmd_shim import resolve_shim
 from wxclaude.core.claude.events import (
     GaugesRead,
     PermissionRequest,
@@ -139,15 +140,14 @@ def find_claude(path: str = "") -> list[str]:
     """The command that starts the CLI; raises ``ClaudeNotFoundError``.
 
     Without ``path`` the ``claude`` command is looked for in the PATH; with it, that file is used.
+    The ``claude.cmd`` of npm is replaced by the program it starts (``cmd_shim``).
     """
-    if path:
-        if not Path(path).is_file():
-            raise ClaudeNotFoundError(f"The file {path} does not exist.")
-        return [path]
-    found = shutil.which("claude")
-    if found is None:
+    if path and not Path(path).is_file():
+        raise ClaudeNotFoundError(f"The file {path} does not exist.")
+    found = path or shutil.which("claude")
+    if not found:
         raise ClaudeNotFoundError("The claude command was not found in the PATH.")
-    return [found]
+    return resolve_shim(found) or [found]
 
 
 @dataclass(slots=True)

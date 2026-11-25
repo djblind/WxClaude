@@ -393,8 +393,12 @@ picker, `/rename`) and WxClaude show the same one:
 - A conversation that has no session yet (no message sent) only has its name in WxClaude; the first
   message gives it to the CLI with `--name` (`claude-cli.md`, "Name of a session").
 - Rename on a conversation that has a session runs `/rename <name>` through the CLI
-  (`ClaudeRunner.rename_session`, instant and free); if it fails the name does not change and the
-  error is shown. It is refused while Claude is answering. Refresh takes a name given elsewhere.
+  (`ClaudeRunner.rename_session`, free; starting the CLI takes a few seconds). It runs in the
+  background: the window stays usable, the new name appears once the CLI is done, and meanwhile
+  nothing is sent (the send buttons are greyed, the remote control answers `busy`) and a second
+  rename, a branch or a deletion is refused like while Claude answers. If it fails the name does not
+  change and the error is shown. It is refused while Claude is answering. Refresh takes a name given
+  elsewhere.
 - A session without a name is shown by the start of its identifier. WxClaude no longer stores
   names (`settings.md`).
 
@@ -417,7 +421,8 @@ Claude are then offered. A provider that was deleted shows as Claude. See `provi
 - **General**: language (applies at the next start); at startup, open the last workspace; *Maximize
   the window at startup* (checked by default; applies at the next start).
 - **Claude** (after General): *Automatic search for claude-p* (checked by default: `claude` is looked
-  for in the PATH); *Path of claude-p* and *Select…* (file dialog), both greyed while the search is
+  for in the PATH; the `claude.cmd` of an npm install is replaced by the program it starts, see
+  `core/claude/cmd_shim.py`); *Path of claude-p* and *Select…* (file dialog), both greyed while the search is
   automatic. OK is refused, with the focus on the path, if the search is off and the path is empty
   or not a file. *Interface type* (a drop-down list, *Stdio protocol* by default or *HTTP hook*): how
   Claude's permission questions reach WxClaude, applied to the next message (the conversation can

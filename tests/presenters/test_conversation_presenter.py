@@ -11,6 +11,7 @@ from wxclaude.core.config.agents import Agent
 from wxclaude.core.config.settings import Settings
 from wxclaude.core.config.workspace_state import WorkspaceState
 from wxclaude.core.conversation.messages import Message
+from wxclaude.core.errors import WxClaudeError
 from wxclaude.core.speech.announcements import Announce
 from wxclaude.presenters.conversation_presenter import ConversationLinks, ConversationPresenter
 from wxclaude.presenters.shared import Shared
@@ -35,6 +36,8 @@ class FakeScreen:
         self.confirmed = True  # the answer to a Yes / No question
         self.recycle_works = True
         self.recycled: list[Path] = []
+        self.hold = False  # True: the work in the background waits for ``finish_held``
+        self.held: list[Callable[[], None]] = []
 
     def ask_name(self, title: str, proposal: str) -> str | None:
         self.calls.append(f"ask {proposal}")
@@ -85,6 +88,28 @@ class FakeScreen:
         if self.recycle_works:
             self.recycled.extend(paths)
         return self.recycle_works
+
+    def run_in_background(
+        self, work: Callable[[], None], done: Callable[[], None], failed: Callable[[str], None]
+    ) -> None:
+        """At once, unless ``hold`` is set: the work then waits in ``held`` (``finish_held``)."""
+
+        def run() -> None:
+            try:
+                work()
+            except WxClaudeError as error:
+                failed(str(error))
+            else:
+                done()
+
+        if self.hold:
+            self.held.append(run)
+        else:
+            run()
+
+    def finish_held(self) -> None:
+        while self.held:
+            self.held.pop(0)()
 
 
 class FakeWorkspaceView:
@@ -471,6 +496,42 @@ def test_a_conversation_is_not_renamed_while_claude_answers(tmp_path: Path) -> N
     assert conversations.name == "Before"
     assert screen.errors == ["Wait for Claude to finish before renaming the conversation."]
     assert not any(call.startswith("ask") for call in screen.calls)
+
+
+def test_while_the_cli_renames_nothing_is_sent_and_the_name_comes_after(tmp_path: Path) -> None:
+    files = FakeClaudeFiles()
+    files.add_session(tmp_path, "one", "Hello", title="Before")
+    conversations, screen, workspaces, _settings = _presenters(tmp_path, files)
+    workspaces.open(tmp_path)
+    screen.hold = True
+    screen.name = "After"
+    conversations.rename()
+    assert conversations.renaming
+    assert not conversations.can_send
+    assert conversations.name == "Before"  # not until the CLI has done it
+    conversations.rename()  # a second rename waits for the first
+    assert screen.errors == ["Wait for Claude to finish before renaming the conversation."]
+    screen.finish_held()
+    assert not conversations.renaming
+    assert conversations.can_send
+    assert conversations.name == "After"
+    assert files.renamed == [("one", "After")]
+
+
+def test_a_rename_that_ends_after_another_conversation_was_opened_names_nothing(
+    tmp_path: Path,
+) -> None:
+    files = FakeClaudeFiles()
+    files.add_session(tmp_path, "one", "Hello", title="Before")
+    conversations, screen, workspaces, _settings = _presenters(tmp_path, files)
+    workspaces.open(tmp_path)
+    screen.hold = True
+    screen.name = "After"
+    conversations.rename()
+    conversations.start_new("Other")
+    screen.finish_held()
+    assert conversations.name == "Other"
+    assert files.renamed == [("one", "After")]
 
 
 def test_refreshing_takes_a_name_given_elsewhere(tmp_path: Path) -> None:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import wx
-from main_window_support import _settings
+from main_window_support import _runner, _settings
 
 from wxclaude.core.conversation.messages import Message, Role
 from wxclaude.ui.main_window import MainWindow
@@ -65,7 +65,7 @@ def test_the_item_shows_and_removes_the_marks_and_the_setting_is_kept(window: Ma
 def test_the_item_follows_the_setting_at_the_start(wx_app: wx.App, tmp_path: Path) -> None:
     settings = _settings()
     settings.remove_markdown_marks = False
-    window = MainWindow(settings)
+    window = MainWindow(settings, _runner())
     try:
         assert not window._menu.marks_item.IsChecked()
         window._conversation.set_messages(MESSAGES)

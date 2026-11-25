@@ -73,6 +73,34 @@ def test_a_request_the_interface_never_runs_times_out_and_is_not_run_later() -> 
     assert executed == []
 
 
+def test_a_request_started_just_before_the_timeout_gets_its_real_answer() -> None:
+    """The interface takes the request as the wait ends: the client is not told ``timeout``
+    for a command that ran, so trying again cannot do it twice."""
+    started = threading.Event()
+    finish = threading.Event()
+
+    def execute(request: RemoteRequest) -> dict[str, object]:
+        started.set()
+        finish.wait(5)  # still running when the wait of the pipe ends
+        return success(value=2)
+
+    def run_in_ui(task: Callable[[], None]) -> None:
+        threading.Thread(target=task, name="interface").start()
+
+    endpoint = RemoteEndpoint(execute, run_in_ui, wait_seconds=0.05)
+    answers: list[dict[str, object]] = []
+    client = threading.Thread(
+        target=lambda: answers.append(_answer(endpoint, '{"command": "interrupt"}'))
+    )
+    client.start()
+    assert started.wait(5)
+    client.join(0.2)  # well past the 0.05 s of the wait
+    assert answers == []  # the client waits for the command that started
+    finish.set()
+    client.join(5)
+    assert answers == [{"ok": True, "value": 2}]
+
+
 def test_a_failing_command_is_answered_without_waiting_for_the_timeout() -> None:
     def execute(request: RemoteRequest) -> dict[str, object]:
         raise ZeroDivisionError

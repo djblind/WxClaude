@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import wx
-from main_window_support import _send, _settings, _wait_until_idle
+from main_window_support import _runner, _send, _settings, _wait_until_idle
 
 from wxclaude.core.conversation.details import DetailAction
 from wxclaude.ui import desktop
@@ -42,7 +42,7 @@ def test_the_item_is_in_the_display_menu_and_checked_by_default(window: MainWind
 def test_the_item_follows_the_setting_at_the_start(wx_app: wx.App, tmp_path: Path) -> None:
     settings = _settings()
     settings.show_tools_summary = False
-    window = MainWindow(settings)
+    window = MainWindow(settings, _runner())
     try:
         assert not _item(window).IsChecked()
     finally:

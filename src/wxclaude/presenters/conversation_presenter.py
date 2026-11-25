@@ -12,11 +12,7 @@ from wxclaude.core.config.workspace_state import WorkspaceState
 from wxclaude.core.config.workspaces import describe
 from wxclaude.core.conversation.conversations import branch_name, default_name, new_conversation_id
 from wxclaude.core.conversation.messages import Message
-from wxclaude.core.errors import (
-    ClaudeNotFoundError,
-    JsonStoreError,
-    RunnerError,
-)
+from wxclaude.core.errors import JsonStoreError
 from wxclaude.core.speech.announcements import Announce
 from wxclaude.i18n import _
 from wxclaude.presenters.conversation_loader import ConversationLoader, LoaderLinks
@@ -87,6 +83,13 @@ class ConversationView(Protocol):
         """Move ``paths`` to the Recycle Bin; False if one of them could not be moved."""
         ...
 
+    def run_in_background(
+        self, work: Callable[[], None], done: Callable[[], None], failed: Callable[[str], None]
+    ) -> None:
+        """Run ``work`` away from the window thread, then, in it, ``done()`` or ``failed(the
+        message of the WxClaudeError it raised)``; nothing is called once the window is gone."""
+        ...
+
 
 @dataclass(frozen=True, slots=True)
 class ConversationLinks:
@@ -125,6 +128,7 @@ class ConversationPresenter:
         self._workspaces = workspaces
         self._links = links
         self._current = ConversationState(agent=shared.settings.default_agent)
+        self._renaming = False  # the CLI is renaming the session (``rename``), in the background
         self._loader = ConversationLoader(
             view,
             shared,
@@ -177,9 +181,15 @@ class ConversationPresenter:
         return bool(self.conversation_id)
 
     @property
+    def renaming(self) -> bool:
+        """Is the CLI renaming the session? It then holds the session file: nothing is sent."""
+        return self._renaming
+
+    @property
     def can_send(self) -> bool:
-        """Can a message be sent now? It needs a conversation, and Claude must not be answering."""
-        return self.has_conversation and not self._links.is_busy()
+        """Can a message be sent now? It needs a conversation, and Claude must neither be
+        answering nor renaming the conversation."""
+        return self.has_conversation and not self._links.is_busy() and not self._renaming
 
     def send(self, text: str, *, alternative: bool) -> None:
         """Send what was typed with the agent of the conversation, or with the alternative one.
@@ -256,7 +266,11 @@ class ConversationPresenter:
         self._loader.refresh()
 
     def rename(self) -> None:
-        """Ask for a name; a conversation that has a session is renamed by the CLI itself."""
+        """Ask for a name; a conversation that has a session is renamed by the CLI itself.
+
+        The CLI is started for that (a few seconds), so it runs in the background: the window
+        stays usable, and nothing is sent until it is done (``can_send``).
+        """
         workspace = self._workspace_with_conversation()
         if workspace is None or self._busy_reported(
             _("Wait for Claude to finish before renaming the conversation.")
@@ -265,20 +279,34 @@ class ConversationPresenter:
         name = self._view.ask_name(_("Rename the conversation"), self.name)
         if name is None or name == self.name:
             return
-        if self._files.find_session(self.conversation_id) is not None:
-            try:
-                self._files.rename_session(
-                    self.conversation_id,
-                    name,
-                    workspace,
-                    restricted=self._security is not None and self._security.restricted,
-                )
-            except (ClaudeNotFoundError, RunnerError) as error:
-                self._view.show_error(
-                    _("The conversation could not be renamed.\n{error}").format(error=error)
-                )
-                return
-        self._set_name(name)
+        conversation_id = self.conversation_id
+        if self._files.find_session(conversation_id) is None:
+            self._set_name(name)  # no session yet: the first message gives the name to the CLI
+            return
+        restricted = self._security is not None and self._security.restricted
+        self._renaming = True
+        self._links.state_changed()
+        self._view.run_in_background(
+            lambda: self._files.rename_session(
+                conversation_id, name, workspace, restricted=restricted
+            ),
+            lambda: self._renamed(conversation_id, name),
+            self._rename_failed,
+        )
+
+    def _renamed(self, conversation_id: str, name: str) -> None:
+        """The CLI renamed the session: the name is shown if it is still the current one."""
+        self._renaming = False
+        if conversation_id == self.conversation_id:
+            self._set_name(name)
+        self._links.state_changed()
+
+    def _rename_failed(self, error: str) -> None:
+        self._renaming = False
+        self._links.state_changed()
+        self._view.show_error(
+            _("The conversation could not be renamed.\n{error}").format(error=error)
+        )
 
     def new_branch(self) -> None:
         """Ask for a name and make a branch of the conversation the current one.
@@ -388,8 +416,9 @@ class ConversationPresenter:
         return workspace if workspace is not None and self.has_conversation else None
 
     def _busy_reported(self, message: str) -> bool:
-        """Is Claude answering? Then ``message`` is shown and the command must do nothing."""
-        busy = self._links.is_busy()
+        """Is Claude answering, or renaming the conversation? Then ``message`` is shown and the
+        command must do nothing."""
+        busy = self._links.is_busy() or self._renaming
         if busy:
             self._view.show_error(message)
         return busy

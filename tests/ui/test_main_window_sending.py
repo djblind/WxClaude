@@ -278,6 +278,14 @@ def test_renaming_a_conversation_that_was_answered_goes_through_the_cli(
     screen = conversation._conversations._view
     monkeypatch.setattr(screen, "ask_name", lambda _title, _proposal: "Renamed")
     conversation._conversations.rename()
+    assert conversation._conversations.renaming  # in the background: the window goes on
+    assert not conversation.can_send
+    deadline = time.monotonic() + 30
+    while conversation._conversations.renaming:
+        assert time.monotonic() < deadline, "The rename did not finish"
+        wx.Yield()
+        time.sleep(0.02)
+    assert conversation.can_send
     assert conversation._conversations.name == "Renamed"
     assert conversation.GetTitle().startswith("Renamed - ")
     session = claude_config / "projects" / "fake" / f"{conversation.conversation_id}.jsonl"

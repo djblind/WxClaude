@@ -12,6 +12,7 @@ from main_window_support import (
     _accepting,
     _enabled,
     _Errors,
+    _runner,
     _session,
     _settings,
 )
@@ -88,7 +89,7 @@ def test_the_remembered_conversation_of_the_last_workspace_is_selected(
     state = WorkspaceState.load(tmp_path, settings.workspaces_dir)
     state.remember(older, Agent(model="opus"))
     state.save()
-    reopened = destroy_after(MainWindow(settings))
+    reopened = destroy_after(MainWindow(settings, _runner()))
     # The name is the one of the session, kept by the CLI.
     assert reopened.GetTitle() == f"Older - {tmp_path.name} - WxClaude"
     assert reopened.conversation_id == older
@@ -104,14 +105,14 @@ def test_an_unknown_session_takes_the_agent_of_its_last_message(
     identifier = _session(claude_config, tmp_path, effort="max")
     settings = _settings(tmp_path / "config" / "settings.json")
     settings.last_workspace = str(tmp_path)
-    window = destroy_after(MainWindow(settings))
+    window = destroy_after(MainWindow(settings, _runner()))
     expected = Agent(model="claude-haiku-4-5", effort="max", permission_mode="plan")
     assert window.conversation_id == identifier
     assert window._conversations.agent == expected
     window.Destroy()
     wx.SafeYield()
     # It is now remembered: another start finds the same agent in the workspace file.
-    again = destroy_after(MainWindow(settings))
+    again = destroy_after(MainWindow(settings, _runner()))
     assert again._conversations.agent == expected
     state = WorkspaceState.load(tmp_path, settings.workspaces_dir)
     assert state.conversations[identifier].agent == expected
@@ -171,7 +172,7 @@ def test_without_the_option_nothing_is_opened(
     settings = _settings()
     settings.reopen_last = False
     settings.last_workspace = str(tmp_path)
-    fresh = destroy_after(MainWindow(settings))
+    fresh = destroy_after(MainWindow(settings, _runner()))
     assert fresh.GetTitle() == "WxClaude"
     assert fresh.conversation_id == ""
 
@@ -181,7 +182,7 @@ def test_a_workspace_that_no_longer_exists_is_not_opened(
 ) -> None:
     settings = _settings()
     settings.last_workspace = str(tmp_path / "gone")
-    fresh = destroy_after(MainWindow(settings))
+    fresh = destroy_after(MainWindow(settings, _runner()))
     assert fresh.GetTitle() == "WxClaude"
     assert fresh.conversation_id == ""
     assert not any(_enabled(fresh._menu.needs_workspace))

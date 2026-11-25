@@ -1,6 +1,7 @@
 """The wx side of the current conversation: the view of ``presenters/conversation_presenter.py``
 (the conversation view, the prompt field, the title of the window and the dialogs)."""
 
+from collections.abc import Callable
 from pathlib import Path
 
 import wx
@@ -14,6 +15,7 @@ from wxclaude.ui.agent_dialog import AgentDialog
 from wxclaude.ui.conversation_name_dialog import ConversationNameDialog
 from wxclaude.ui.conversation_view import ConversationView
 from wxclaude.ui.feedback import Feedback
+from wxclaude.ui.worker import run_in_background
 
 
 class WxConversationScreen:
@@ -82,3 +84,14 @@ class WxConversationScreen:
 
     def move_to_recycle_bin(self, paths: list[Path]) -> bool:
         return desktop.move_to_recycle_bin(paths)
+
+    def run_in_background(
+        self, work: Callable[[], None], done: Callable[[], None], failed: Callable[[str], None]
+    ) -> None:
+        run_in_background(
+            work,
+            lambda _result: done(),
+            failed,
+            name="conversation-rename",
+            alive=lambda: bool(self._frame),  # False once wx deleted the window
+        )

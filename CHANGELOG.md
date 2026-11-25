@@ -4,6 +4,16 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 `docs/versions.md`. Format: one or two lines per change, starting with `Added:`, `Modified:` or
 `Fixed:`, no jargon.
 
+## Unreleased
+
+- Fixed: renaming a conversation no longer freezes the window for the few seconds Claude Code takes:
+  it is done in the background, and nothing is sent until the new name is there.
+- Fixed: the remote control no longer answers `timeout` for a command that the window started at the
+  last moment; `timeout` now always means that nothing was done, so trying again is safe.
+- Fixed: with Claude Code installed by npm (`claude.cmd`), WxClaude starts the program behind it
+  directly, so a `&`, `%` or quote in a conversation name can no longer be misread by Windows.
+- Fixed: the key relay, stopped and started again at once, could keep two idle watchers instead of one.
+
 ## 0.4.0 (2026-11-12)
 
 - Added: the option `--remote`, which lets another program give WxClaude a few commands through the
