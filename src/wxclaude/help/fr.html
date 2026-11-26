@@ -134,7 +134,21 @@ L'utilisation de WxClaude avec un fournisseur est possible sans être identifié
 <li>un nom et une adresse (URL) ;</li>
 <li>une clé API, ou « aucune » pour un serveur local ;</li>
 <li>la liste des modèles disponibles et des variables de configuration.</li>
+<li>le moteur : Claude Code, ou l'Agent SDK pour les crédits API de l'abonnement (voir plus bas).</li>
 </ul>
+<h3>Utiliser les crédits API de l'abonnement</h3>
+<p>Les abonnements Max, Ultra et Team donnent chaque mois des crédits pour l'API Anthropic.
+Ces crédits ne paient pas Claude Code, mais ils paient l'Agent SDK, sur lequel WxClaude peut s'appuyer.
+Une fois votre quota d'abonnement atteint, vous pouvez ainsi continuer avec ces crédits.</p>
+<ol>
+<li>Sur claude.ai, dans les paramètres de facturation de l'organisation, activez les « API credits » et liez une organisation de la console.</li>
+<li>Sur platform.claude.com, créez une clé API.</li>
+<li>Dans les préférences de WxClaude, ajoutez un fournisseur : adresse <code>https://api.anthropic.com</code>, moteur « Agent SDK (crédits API de l'abonnement) », clé enregistrée par WxClaude, et les noms complets des modèles (par exemple <code>claude-haiku-5-5</code>, <code>claude-sonnet-5-5</code>, <code>claude-opus-5-5</code>).</li>
+<li>Choisissez ce fournisseur dans un agent, par exemple l'agent alternatif (Maj+Entrée).</li>
+</ol>
+<p>La conversation reste la même : Claude Code et l'Agent SDK partagent l'historique.
+Sans carte bancaire enregistrée sur la console, rien n'est facturé : une fois les crédits du mois épuisés, la réponse dit que le solde est insuffisant.
+La transmission « Relayée » ne s'applique pas à ce moteur : la clé est alors transmise de façon masquée.</p>
 <h3>Protection des clés API</h3>
 <p>Les clés d'autorisation des fournisseurs sont chiffrées avec votre compte Windows.
 Plusieurs méthodes de transmission des clés à Claude Code sont possibles :</p>

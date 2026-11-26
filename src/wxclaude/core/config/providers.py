@@ -22,6 +22,9 @@ CLAUDE_ID = DEFAULT_PROVIDER
 KEY_STORED = "stored"  # the key is kept encrypted by WxClaude
 KEY_NONE = "none"  # a local server that needs no key: a placeholder is given to the CLI
 KEY_SOURCES = (KEY_STORED, KEY_NONE)
+ENGINE_CLI = "cli"  # WxClaude starts Claude Code itself (``claude -p``)
+ENGINE_SDK = "agent_sdk"  # through the Claude Agent SDK: the API credits of a plan pay for it
+ENGINES = (ENGINE_CLI, ENGINE_SDK)
 ALIASES = ("haiku", "sonnet", "opus")  # the models the CLI lets a provider answer to
 TIER_COUNT = len(MODELS)  # small, medium, large, largest: the same ranks as the models of Claude
 NAME_MAX = 15  # characters in the name of a provider
@@ -55,10 +58,20 @@ class Provider:
     credit_method: str = DEFAULT_CREDIT_METHOD  # how to ask the credit (``provider_methods``)
     #: The variables of the CLI this provider sets (``provider_variables``): name -> value.
     env: dict[str, str] = field(default_factory=dict)
+    #: How a message reaches it: Claude Code started by WxClaude, or the Agent SDK
+    #: (``docs/agent-sdk.md``), which needs a key of the Anthropic API.
+    engine: str = ENGINE_CLI
 
     def __post_init__(self) -> None:
         self.tiers = fill_tiers(self.tiers)
         self.env = {name: value.strip() for name, value in self.env.items() if value.strip()}
+        if self.engine not in ENGINES:
+            self.engine = ENGINE_CLI
+
+    @property
+    def uses_sdk(self) -> bool:
+        """Does a message to this provider go through the Agent SDK?"""
+        return not self.is_builtin and self.engine == ENGINE_SDK
 
     @property
     def models(self) -> list[str]:
@@ -92,6 +105,8 @@ class Provider:
             )
         if not self.base_url.startswith(_URL_SCHEMES) or " " in self.base_url:
             return _("The address of a provider starts with http:// or https://.")
+        if self.uses_sdk and self.key_source != KEY_STORED:
+            return _("The Agent SDK needs a key of the Anthropic API, saved by WxClaude.")
         return self._models_problem() or variables_problem(self.env)
 
     def _models_problem(self) -> str | None:
@@ -113,6 +128,7 @@ class Provider:
             "models_method": self.models_method,
             "credit_method": self.credit_method,
             "env": dict(self.env),
+            "engine": self.engine,
         }
 
     @classmethod
@@ -138,6 +154,7 @@ class Provider:
             models_method=_text(models_method, DEFAULT_MODELS_METHOD),
             credit_method=_text(credit_method, DEFAULT_CREDIT_METHOD),
             env=_variables(data.get("env")),
+            engine=_text(data.get("engine"), ENGINE_CLI),  # unknown: Claude Code (__post_init__)
         )
 
 

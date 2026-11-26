@@ -2034,3 +2034,18 @@ msgstr ""
 
 msgid "{name} runs in the mode {actual}, not in the mode {asked} that was chosen."
 msgstr "{name} fonctionne dans le mode {actual}, et non dans le mode {asked} choisi."
+
+msgid "En&gine"
+msgstr "Mo&teur"
+
+msgid "Claude Code"
+msgstr "Claude Code"
+
+msgid "Agent SDK (API credits of the plan)"
+msgstr "Agent SDK (crédits API de l'abonnement)"
+
+msgid "The Agent SDK needs a key of the Anthropic API, saved by WxClaude."
+msgstr "L'Agent SDK a besoin d'une clé de l'API Anthropic, enregistrée par WxClaude."
+
+msgid "The Claude Agent SDK is not installed: this provider cannot be used."
+msgstr "Le Claude Agent SDK n'est pas installé : ce fournisseur ne peut pas servir."

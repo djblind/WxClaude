@@ -18,6 +18,8 @@ from wxclaude.core.config.providers import ALIASES, KEY_NONE, Provider, Provider
 from wxclaude.core.security.key_relay import KeyRelay, RelayAccess
 
 KEY_VARIABLE = "ANTHROPIC_AUTH_TOKEN"
+# A key of the Anthropic API itself (the Agent SDK): sent as ``x-api-key``, which the API wants.
+API_KEY_VARIABLE = "ANTHROPIC_API_KEY"
 SCRUB_VARIABLE = "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"
 NO_KEY = "no-key"  # given to the CLI by a provider that needs none (a local server)
 # What the CLI sends to Anthropic when the user chose another provider.
@@ -87,11 +89,25 @@ def provider_environment(
         key = NO_KEY
     else:
         key = launch.relay.token if launch.relay else launch.key
-    environment[KEY_VARIABLE] = key
+    environment[API_KEY_VARIABLE if launch.provider.uses_sdk else KEY_VARIABLE] = key
     environment.update(TELEMETRY_OFF)
     if launch.scrub:
         environment[SCRUB_VARIABLE] = "1"
     return environment
+
+
+def blanked_variables(
+    environment: Mapping[str, str], inherited: Mapping[str, str] | None = None
+) -> dict[str, str]:
+    """The variables of WxClaude that ``environment`` left out on purpose (``_INHERITED_PREFIXES``),
+    set to empty: the Agent SDK adds its own environment to that of WxClaude instead of replacing
+    it, so a variable it should not see must be given, empty."""
+    source = os.environ if inherited is None else inherited
+    return {
+        name: ""
+        for name in source
+        if name.upper().startswith(_INHERITED_PREFIXES) and name not in environment
+    }
 
 
 def sends_effort(launch: ProviderLaunch | None) -> bool:
@@ -122,7 +138,10 @@ def launch_for(
     if provider.is_builtin:
         return None
     key = providers.key(provider.id) if provider.needs_key else ""
-    if transmission == RELAYED and relay is not None and provider.needs_key:
+    # The relay gives the key as a bearer token, which the API of Anthropic (the Agent SDK) does
+    # not take: such a provider goes the masked way.
+    relayable = provider.needs_key and not provider.uses_sdk
+    if transmission == RELAYED and relay is not None and relayable:
         return ProviderLaunch(provider, "", False, relay.access(provider, key))
     # Without a relay the safe way is taken. A provider that needs no key has no secret to hide.
     scrub = transmission in (MASKED, RELAYED) and provider.needs_key

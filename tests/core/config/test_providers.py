@@ -1,6 +1,7 @@
 """The providers of the user and their keys."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ from fake_vault import PREFIX, FakeVault
 from wxclaude.core.config.providers import (
     CLAUDE,
     CLAUDE_ID,
+    ENGINE_CLI,
+    ENGINE_SDK,
     KEY_NONE,
     KEY_STORED,
     MODEL_MAX,
@@ -247,6 +250,28 @@ def test_the_variables_of_a_provider_round_trip_and_an_old_file_has_none(tmp_pat
     del old["env"]
     path.write_text(json.dumps({"providers": [old]}), encoding="utf-8")
     assert store_at(path).get("deepseek").env == {}
+
+
+def test_the_engine_round_trips_and_an_old_or_unknown_one_is_claude_code(tmp_path: Path) -> None:
+    path = tmp_path / "providers.json"
+    store = store_at(path)
+    store.add(replace(deepseek(), engine=ENGINE_SDK))
+    store.save()
+    assert store_at(path).get("deepseek").uses_sdk
+    old = deepseek().to_dict()
+    del old["engine"]
+    path.write_text(json.dumps({"providers": [old]}), encoding="utf-8")
+    assert store_at(path).get("deepseek").engine == ENGINE_CLI
+    old["engine"] = "something else"
+    path.write_text(json.dumps({"providers": [old]}), encoding="utf-8")
+    assert store_at(path).get("deepseek").engine == ENGINE_CLI
+
+
+def test_the_agent_sdk_needs_a_key_saved_by_wxclaude() -> None:
+    assert replace(deepseek(), engine=ENGINE_SDK).problem() is None
+    problem = replace(deepseek(), engine=ENGINE_SDK, key_source=KEY_NONE).problem()
+    assert problem == "The Agent SDK needs a key of the Anthropic API, saved by WxClaude."
+    assert not CLAUDE.uses_sdk
 
 
 def test_a_file_cannot_make_a_provider_set_another_variable(tmp_path: Path) -> None:

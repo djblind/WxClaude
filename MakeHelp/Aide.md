@@ -161,6 +161,22 @@ Dans les préférences, le formulaire d'un fournisseur permet de définir :
 - un nom et une adresse (URL) ;
 - une clé API, ou « aucune » pour un serveur local ;
 - la liste des modèles disponibles et des variables de configuration.
+- le moteur : Claude Code, ou l'Agent SDK pour les crédits API de l'abonnement (voir plus bas).
+
+### Utiliser les crédits API de l'abonnement
+
+Les abonnements Max, Ultra et Team donnent chaque mois des crédits pour l'API Anthropic.
+Ces crédits ne paient pas Claude Code, mais ils paient l'Agent SDK, sur lequel WxClaude peut s'appuyer.
+Une fois votre quota d'abonnement atteint, vous pouvez ainsi continuer avec ces crédits.
+
+1. Sur claude.ai, dans les paramètres de facturation de l'organisation, activez les « API credits » et liez une organisation de la console.
+2. Sur platform.claude.com, créez une clé API.
+3. Dans les préférences de WxClaude, ajoutez un fournisseur : adresse `https://api.anthropic.com`, moteur « Agent SDK (crédits API de l'abonnement) », clé enregistrée par WxClaude, et les noms complets des modèles (par exemple `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`).
+4. Choisissez ce fournisseur dans un agent, par exemple l'agent alternatif (Maj+Entrée).
+
+La conversation reste la même : Claude Code et l'Agent SDK partagent l'historique.
+Sans carte bancaire enregistrée sur la console, rien n'est facturé : une fois les crédits du mois épuisés, la réponse dit que le solde est insuffisant.
+La transmission « Relayée » ne s'applique pas à ce moteur : la clé est alors transmise de façon masquée.
 
 ### Protection des clés API
 

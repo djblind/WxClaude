@@ -45,6 +45,7 @@ from wxclaude.core.claude.permission_channel import (
 )
 from wxclaude.core.claude.process_input import ProcessInput
 from wxclaude.core.claude.questions import answered_input
+from wxclaude.core.claude.sdk_run import SdkRun, sdk_available
 from wxclaude.core.claude.stream import parse_stream_line
 from wxclaude.core.claude.usage_text import parse_usage
 from wxclaude.core.config.agents import Agent
@@ -54,6 +55,7 @@ from wxclaude.core.security.restricted import (
     restricted_permission_mode,
     restricted_settings,
 )
+from wxclaude.i18n import _
 
 _KILL_WAIT_SECONDS = 5
 _RENAME_WAIT_SECONDS = 30
@@ -174,8 +176,13 @@ class ClaudeRunner:
         self.hook_timeout_seconds = DEFAULT_HOOK_TIMEOUT_SECONDS  # the CLI's wait, hook channel
         self._process: subprocess.Popen[str] | None = None
         self._channel: PermissionChannel | None = None
+        self._sdk: SdkRun | None = None  # a message sent through the Agent SDK (``sdk_run``)
         self._interrupted = False
         self._lock = threading.Lock()
+
+    def _busy(self) -> bool:
+        """Is something running? (Called under ``_lock``.)"""
+        return self._process is not None or self._sdk is not None
 
     def is_available(self) -> bool:
         """Can the CLI be started? (Always, with a ``command`` given: the tests.)"""
@@ -195,15 +202,19 @@ class ClaudeRunner:
     @property
     def is_running(self) -> bool:
         with self._lock:
-            return self._process is not None
+            return self._busy()
 
     def start(self, request: RunRequest, on_event: Callable[[RunEvent], None]) -> None:
         """Start ``claude`` for ``request``; events then come through ``on_event``.
 
-        Raises ``ClaudeNotFoundError`` or ``RunnerError`` if it cannot be started, or if a
-        message is already running.
+        A provider whose engine is the Agent SDK is sent through it (``sdk_run``). Raises
+        ``ClaudeNotFoundError`` or ``RunnerError`` if it cannot be started, or if a message is
+        already running.
         """
         command = self._command if self._command is not None else find_claude(self.claude_path)
+        if request.provider is not None and request.provider.provider.uses_sdk:
+            self._start_sdk(command, request, on_event)
+            return
         channel = make_channel(self.permission_channel, on_event, self.hook_timeout_seconds)
         try:
             process, stdin = self._spawn(command, request, channel)
@@ -225,13 +236,40 @@ class ClaudeRunner:
             reader.start()
         threading.Thread(target=self._supervise, args=(run,), daemon=True).start()
 
+    def _start_sdk(
+        self, command: Sequence[str], request: RunRequest, on_event: Callable[[RunEvent], None]
+    ) -> None:
+        """Send ``request`` through the Agent SDK, with the claude program of ``command`` (the
+        SDK's own one when the command is not a single program)."""
+        if not sdk_available():
+            raise RunnerError(
+                _("The Claude Agent SDK is not installed: this provider cannot be used.")
+            )
+
+        def finished() -> None:
+            with self._lock:
+                self._sdk = None
+
+        cli_path = command[0] if len(command) == 1 else None
+        run = SdkRun(request, on_event, cli_path=cli_path, finished=finished)
+        with self._lock:
+            if self._busy():
+                raise RunnerError("Claude is already answering.")
+            self._sdk = run
+            self._interrupted = False
+        try:
+            run.start()
+        except RunnerError:
+            finished()
+            raise
+
     def _spawn(
         self, command: Sequence[str], request: RunRequest, channel: PermissionChannel
     ) -> tuple[subprocess.Popen[str], ProcessInput]:
         """Start the process and give its input to the channel."""
         argv = [*command, *build_arguments(request, channel)]
         with self._lock:
-            if self._process is not None:
+            if self._busy():
                 raise RunnerError("Claude is already answering.")
             try:
                 process = subprocess.Popen(
@@ -324,7 +362,7 @@ class ClaudeRunner:
             *(RESTRICTED_ARGUMENTS if restricted else ()),
         ]
         with self._lock:
-            if self._process is not None:
+            if self._busy():
                 raise RunnerError("Claude is already answering.")
             try:
                 process = subprocess.Popen(
@@ -381,7 +419,7 @@ class ClaudeRunner:
 
     def _answer(self, request: PermissionRequest, body: dict[str, object]) -> None:
         with self._lock:
-            channel = self._channel
+            channel: PermissionChannel | SdkRun | None = self._channel or self._sdk
         if channel is None:
             raise RunnerError("Claude is not waiting for an answer.")
         channel.answer(request.request_id, body)
@@ -389,11 +427,14 @@ class ClaudeRunner:
     def interrupt(self) -> None:
         """Stop the running message (nothing happens if none runs)."""
         with self._lock:
-            process = self._process
-            if process is None:
+            process, sdk = self._process, self._sdk
+            if process is None and sdk is None:
                 return
             self._interrupted = True
-        kill_tree(process)
+        if sdk is not None:
+            sdk.interrupt()
+        if process is not None:
+            kill_tree(process)
 
     @staticmethod
     def _read_stdout(

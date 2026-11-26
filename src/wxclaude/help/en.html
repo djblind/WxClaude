@@ -134,7 +134,21 @@ Using WxClaude with a provider is possible without being signed in with a Claude
 <li>a name and an address (URL);</li>
 <li>an API key, or &quot;none&quot; for a local server;</li>
 <li>the list of available models and configuration variables.</li>
+<li>the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below).</li>
 </ul>
+<h3>Using the API credits of the plan</h3>
+<p>The Max, Ultra and Team plans give credits for the Anthropic API every month.
+These credits do not pay for Claude Code, but they pay for the Agent SDK, which WxClaude can rely on.
+Once the quota of your plan is reached, you can go on with these credits.</p>
+<ol>
+<li>On claude.ai, in the billing settings of the organization, turn on the &quot;API credits&quot; and link an organization of the console.</li>
+<li>On platform.claude.com, create an API key.</li>
+<li>In the preferences of WxClaude, add a provider: address <code>https://api.anthropic.com</code>, engine &quot;Agent SDK (API credits of the plan)&quot;, key saved by WxClaude, and the full names of the models (for example <code>claude-haiku-5-5</code>, <code>claude-sonnet-5-5</code>, <code>claude-opus-5-5</code>).</li>
+<li>Choose this provider in an agent, for example the alternative agent (Shift+Enter).</li>
+</ol>
+<p>The conversation stays the same: Claude Code and the Agent SDK share the history.
+Without a card saved on the console nothing is charged: once the credits of the month are spent, the answer says that the balance is too low.
+The &quot;Relayed&quot; transmission does not apply to this engine: the key is then passed masked.</p>
 <h3>Protection of API keys</h3>
 <p>The authorization keys of the providers are encrypted with your Windows account.
 Several methods of passing the keys to Claude Code are possible:</p>

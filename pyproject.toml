@@ -13,6 +13,9 @@ dependencies = [
     "wxPython>=4.3",
     "platformdirs>=4",
     "markdown-it-py>=3",
+    # The engine "Agent SDK" of a provider (docs/agent-sdk.md); its bundled claude program is
+    # left out of the packaged application, which gives the SDK the user's own.
+    "claude-agent-sdk>=0.2",
 ]
 
 [project.optional-dependencies]

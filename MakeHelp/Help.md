@@ -164,6 +164,22 @@ In the preferences, the form of a provider lets you define:
 - a name and an address (URL);
 - an API key, or "none" for a local server;
 - the list of available models and configuration variables.
+- the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below).
+
+### Using the API credits of the plan
+
+The Max, Ultra and Team plans give credits for the Anthropic API every month.
+These credits do not pay for Claude Code, but they pay for the Agent SDK, which WxClaude can rely on.
+Once the quota of your plan is reached, you can go on with these credits.
+
+1. On claude.ai, in the billing settings of the organization, turn on the "API credits" and link an organization of the console.
+2. On platform.claude.com, create an API key.
+3. In the preferences of WxClaude, add a provider: address `https://api.anthropic.com`, engine "Agent SDK (API credits of the plan)", key saved by WxClaude, and the full names of the models (for example `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`).
+4. Choose this provider in an agent, for example the alternative agent (Shift+Enter).
+
+The conversation stays the same: Claude Code and the Agent SDK share the history.
+Without a card saved on the console nothing is charged: once the credits of the month are spent, the answer says that the balance is too low.
+The "Relayed" transmission does not apply to this engine: the key is then passed masked.
 
 ### Protection of API keys
 

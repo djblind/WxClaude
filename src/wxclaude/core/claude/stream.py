@@ -222,5 +222,10 @@ def parse_stream_line(line: str) -> list[RunEvent]:
         raise StreamParseError(f"Not a JSON line: {line[:200]!r}") from error
     if not isinstance(entry, dict):
         raise StreamParseError(f"Not a JSON object: {line[:200]!r}")
+    return parse_stream_entry(entry)
+
+
+def parse_stream_entry(entry: dict[str, object]) -> list[RunEvent]:
+    """The events of one ``stream-json`` object already read (the Agent SDK gives them so)."""
     parser = _PARSERS.get(str(entry.get("type")))
     return parser(entry) if parser is not None else []

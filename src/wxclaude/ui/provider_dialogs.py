@@ -11,6 +11,9 @@ from wxclaude.core.config.provider_methods import (
     ModelsMethod,
 )
 from wxclaude.core.config.providers import (
+    ENGINE_CLI,
+    ENGINE_SDK,
+    ENGINES,
     KEY_NONE,
     KEY_SOURCES,
     KEY_STORED,
@@ -29,6 +32,10 @@ from wxclaude.ui.worker import run_in_background
 _KEY_SOURCE_LABELS = {
     KEY_STORED: N_("Saved by WxClaude"),
     KEY_NONE: N_("No key (a local server)"),
+}
+_ENGINE_LABELS = {
+    ENGINE_CLI: N_("Claude Code"),
+    ENGINE_SDK: N_("Agent SDK (API credits of the plan)"),
 }
 
 
@@ -58,6 +65,15 @@ class ProviderDialog(wx.Dialog):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self._name = self._text(sizer, _("&Name"), provider.name, NAME_MAX)
         self._address = self._text(sizer, _("&Address"), provider.base_url)
+        engine_text = _("En&gine")
+        sizer.Add(wx.StaticText(self, label=engine_text), 0, wx.LEFT | wx.RIGHT, 8)
+        self._engine = wx.Choice(
+            self,
+            choices=[_(_ENGINE_LABELS[engine]) for engine in ENGINES],
+            name=accessible_name(engine_text),
+        )
+        self._engine.SetSelection(ENGINES.index(provider.engine))
+        sizer.Add(self._engine, 0, wx.EXPAND | wx.ALL, 8)
         key_text = _("&Key")
         sizer.Add(wx.StaticText(self, label=key_text), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
         self._key_source = wx.Choice(
@@ -212,6 +228,7 @@ class ProviderDialog(wx.Dialog):
                 models_method=self._models_id,
                 credit_method=self._credit_id,
                 env=self._variables.env,
+                engine=ENGINES[self._engine.GetSelection()],
             ),
             had_key=kept.had_key,
             key=kept.key if key_source == KEY_STORED else "",

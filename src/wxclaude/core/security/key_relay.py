@@ -31,6 +31,7 @@ UPSTREAM_TIMEOUT = 600.0  # the wait for the provider: a model can think for a l
 ALLOWED_PREFIX = "/v1/"  # the only paths relayed (the API of the provider)
 MAX_BODY = 64 * 1024 * 1024
 _CHUNK = 64 * 1024
+_DRAIN_MAX = 1024 * 1024  # a refused request whose body is at most this big is read before closing
 # Headers that belong to one connection and are not passed on (RFC 9110), and the credentials,
 # which are replaced.
 _HOP_BY_HOP = frozenset(
@@ -205,6 +206,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     """One request of the CLI: check the token, forward to the provider, stream the answer back."""
 
     protocol_version = "HTTP/1.1"
+    _body_read = False  # has the body of the request under way been read (or given up)?
     # The headers and the first piece of an answer are two small sends in a row: with the Nagle
     # algorithm the second waits for the acknowledgement of the first, which Windows delays (about
     # 0.2 s more for each request of the CLI, measured).
@@ -224,6 +226,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         return owner
 
     def _relay(self) -> None:
+        self._body_read = False  # one handler serves the requests of a connection one by one
         owner = self._owner
         owner.begin()
         try:
@@ -289,8 +292,22 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         headers["Connection"] = "close"
         return headers
 
+    def _drain_small_body(self) -> None:
+        """Read and drop a body of at most ``_DRAIN_MAX`` bytes that was not read; a bigger one, or
+        one already read (``_body_read``), is left."""
+        if self._body_read:
+            return
+        self._body_read = True
+        try:
+            length = int(self.headers.get("Content-Length", "0") or 0)
+        except ValueError:
+            return
+        if 0 < length <= _DRAIN_MAX:
+            self.rfile.read(length)
+
     def _read_body(self) -> bytes | None:
         """The body of the request; None (the answer is sent) if it cannot be read or is too big."""
+        self._body_read = True  # whatever happens below, nothing is to be drained any more
         if self.headers.get("Transfer-Encoding", "").lower() == "chunked":
             return self._read_chunked()
         try:
@@ -344,7 +361,12 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             self.wfile.flush()
 
     def _fail(self, status: int, kind: str, message: str) -> None:
-        """Answer with an error in the shape of the API (the key is never in it)."""
+        """Answer with an error in the shape of the API (the key is never in it).
+
+        A small body not read yet is read first: closing a connection that still holds data makes
+        Windows reset it, and the client then loses the answer (measured: ``WinError 10053``).
+        """
+        self._drain_small_body()
         body = json.dumps({"type": "error", "error": {"type": kind, "message": message}}).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")

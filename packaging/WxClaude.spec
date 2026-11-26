@@ -21,9 +21,13 @@ analysis = Analysis(
     [str(package / "__main__.py")],
     pathex=[str(root / "src")],
     datas=datas,
-    hiddenimports=[],
+    # The Agent SDK is imported only when a message goes through it (core/claude/sdk_run.py).
+    hiddenimports=["claude_agent_sdk", "wxclaude.core.claude.sdk_messages"],
     excludes=["tkinter", "pytest", "mypy", "ruff"],
 )
+# The SDK carries its own claude program (about 400 MB); WxClaude gives it the user's one instead.
+analysis.datas = [entry for entry in analysis.datas if "_bundled" not in entry[0]]
+analysis.binaries = [entry for entry in analysis.binaries if "_bundled" not in entry[0]]
 pyz = PYZ(analysis.pure)
 exe = EXE(
     pyz,

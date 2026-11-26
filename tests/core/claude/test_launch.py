@@ -4,17 +4,19 @@ import pytest
 from fake_vault import FakeVault
 
 from wxclaude.core.claude.launch import (
+    API_KEY_VARIABLE,
     KEY_VARIABLE,
     NO_KEY,
     SCRUB_VARIABLE,
     TELEMETRY_OFF,
     ProviderLaunch,
+    blanked_variables,
     launch_for,
     provider_environment,
     provider_settings,
     sends_effort,
 )
-from wxclaude.core.config.providers import CLAUDE, KEY_NONE, Provider, ProviderStore
+from wxclaude.core.config.providers import CLAUDE, ENGINE_SDK, KEY_NONE, Provider, ProviderStore
 from wxclaude.core.security.key_relay import KeyRelay, RelayAccess
 
 pytestmark = pytest.mark.unit
@@ -270,6 +272,37 @@ def test_relayed_without_a_relay_falls_back_to_masked() -> None:
     launched = launch_for("deepseek", store_with_key(), transmission="relayed")
     assert launched is not None
     assert (launched.key, launched.scrub, launched.relay) == (SECRET, True, None)
+
+
+def test_the_agent_sdk_gets_the_key_as_an_api_key_and_is_never_relayed() -> None:
+    store = ProviderStore(FakeVault())
+    store.add(deepseek(id="api", engine=ENGINE_SDK))
+    store.set_key("api", SECRET)
+    relay = KeyRelay(check_seconds=3600)
+    try:
+        launched = launch_for("api", store, transmission="relayed", relay=relay)
+        assert launched is not None
+        assert (launched.key, launched.scrub, launched.relay) == (SECRET, True, None)
+        assert not relay.running  # the API wants the key as x-api-key, the relay sends a bearer
+    finally:
+        relay.stop()
+    environment = provider_environment(launched, INHERITED)
+    assert environment is not None
+    assert environment[API_KEY_VARIABLE] == SECRET
+    assert KEY_VARIABLE not in environment
+
+
+def test_the_variables_left_out_are_given_empty_for_the_sdk() -> None:
+    environment = provider_environment(launch(), INHERITED)
+    assert environment is not None
+    blanks = blanked_variables(environment, INHERITED)
+    assert blanks == {
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_BASE_URL": "",
+        "anthropic_model": "",
+        "CLAUDE_CODE_USE_BEDROCK": "",
+        "CLAUDE_CODE_USE_VERTEX": "",
+    }  # ANTHROPIC_AUTH_TOKEN is in the environment, with the key of the provider
 
 
 def test_a_provider_that_needs_no_key_has_nothing_to_hide_or_to_relay() -> None:
