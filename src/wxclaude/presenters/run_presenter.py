@@ -24,7 +24,7 @@ from wxclaude.core.claude.events import (
     TurnEnded,
     TurnResult,
 )
-from wxclaude.core.claude.launch import launch_for
+from wxclaude.core.claude.launch import ProviderLaunch, launch_for
 from wxclaude.core.claude.permissions import (
     Decision,
 )
@@ -117,6 +117,11 @@ class RunLinks:
     stats: Callable[[], WorkspaceStats | None] = lambda: None  # the statistics of the workspace
 
 
+def _credit_provider(launch: ProviderLaunch | None) -> str:
+    """The identifier of the provider of a message when it spends the API credits (Agent SDK)."""
+    return launch.provider.id if launch is not None and launch.provider.uses_sdk else ""
+
+
 class RunPresenter:
     """Runs one message at a time and shows what Claude does through ``view``."""
 
@@ -152,7 +157,11 @@ class RunPresenter:
             ),
         )
         self._local_messages = 0  # messages added by this run, for their identifiers
-        self._stats = StatsRecorder(links.stats, lambda message: self._view.show_error(message))
+        self._stats = StatsRecorder(
+            links.stats,
+            lambda message: self._view.show_error(message),
+            credits=lambda: shared.settings.credits_path,
+        )
         self._permissions = PermissionHandler(
             view,
             runner,
@@ -246,7 +255,7 @@ class RunPresenter:
         self._turn_conversation = conversation_id
         self._turn_mode = self._mode_sent(agent)
         self._turn_masked = provider is not None and provider.active and provider.scrub
-        self._stats.start_message()
+        self._stats.start_message(_credit_provider(provider))
         self._progress.reset()
         self._permissions.start_message()
         self._links.state_changed()

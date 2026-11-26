@@ -28,6 +28,7 @@ MAX_BODY_BYTES = 8 * 1024 * 1024  # a request holds the whole input of the tool 
 _SOCKET_TIMEOUT_SECONDS = 30  # reading a request; waiting for the user is not a socket operation
 _EXPIRY_MARGIN_SECONDS = 5  # the CLI gives up at the timeout; the thread waits a little longer
 _POLL_INTERVAL_SECONDS = 0.1
+_DRAIN_MAX_BYTES = 1024 * 1024  # a refused body at most this big is read before the answer
 
 
 @dataclass(slots=True)
@@ -55,6 +56,17 @@ def _reply(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, obje
         return  # the CLI closed the connection (its waiting time ran out): nobody to tell
 
 
+def _drain(handler: BaseHTTPRequestHandler) -> None:
+    """Read and drop a small body that is refused unread. Windows resets a connection closed with
+    unread data, and the client then gets the reset instead of the refusal."""
+    try:
+        length = int(handler.headers.get("Content-Length", "0") or 0)
+        if 0 < length <= _DRAIN_MAX_BYTES:
+            handler.rfile.read(length)
+    except ValueError, OSError:
+        return
+
+
 def _read_body(handler: BaseHTTPRequestHandler) -> dict[str, object] | None:
     """The JSON object of the request; else the error is already answered and this is None."""
     try:
@@ -63,6 +75,7 @@ def _read_body(handler: BaseHTTPRequestHandler) -> dict[str, object] | None:
         _reply(handler, 400, {})
         return None
     if length < 0 or length > MAX_BODY_BYTES:
+        _drain(handler)
         _reply(handler, 413, {})
         return None
     try:
@@ -149,6 +162,7 @@ class HookChannel:
     def _handle(self, handler: BaseHTTPRequestHandler) -> None:
         """One POST of the CLI: ask the interface, wait for the answer, write the response."""
         if handler.path != f"/hook/{self._token}":
+            _drain(handler)
             _reply(handler, 404, {})
             return
         body = _read_body(handler)

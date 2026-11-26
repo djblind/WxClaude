@@ -181,6 +181,10 @@ The conversation stays the same: Claude Code and the Agent SDK share the history
 Without a card saved on the console nothing is charged: once the credits of the month are spent, the answer says that the balance is too low.
 The "Relayed" transmission does not apply to this engine: the key is then passed masked.
 
+An API key cannot ask for the balance left. So WxClaude adds up the cost of each message sent by this engine itself, at list price.
+The gauge dialog tells, for each Agent SDK provider, what it spent this month, for example "API: 3.42 dollars spent this month from the API credits".
+The balance itself is on the console of Anthropic: platform.claude.com, Billing page.
+
 ### Protection of API keys
 
 The authorization keys of the providers are encrypted with your Windows account.

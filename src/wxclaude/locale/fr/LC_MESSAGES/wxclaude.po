@@ -2049,3 +2049,12 @@ msgstr "L'Agent SDK a besoin d'une clé de l'API Anthropic, enregistrée par WxC
 
 msgid "The Claude Agent SDK is not installed: this provider cannot be used."
 msgstr "Le Claude Agent SDK n'est pas installé : ce fournisseur ne peut pas servir."
+
+msgid "The spending of the API credits could not be saved.\n{error}"
+msgstr "Les dépenses des crédits API n'ont pas pu être enregistrées.\n{error}"
+
+msgid "{name}: {amount} dollars spent this month from the API credits, at list price."
+msgstr "{name} : {amount} dollars dépensés ce mois-ci sur les crédits API, au prix catalogue."
+
+msgid "The balance left is on the console of Anthropic: platform.claude.com, Billing."
+msgstr "Le solde restant se lit sur la console d'Anthropic : platform.claude.com, page Billing."

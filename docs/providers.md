@@ -200,7 +200,9 @@ is removed from every message.
 each provider that has a key saved and a gauge method other than *No method*, one provider after the
 other with a blank line between, asked away from the window thread when the dialog opens. A provider
 with no method or no key has no line. A failure is a line of the dialog, never an error box, and never
-holds the key.
+holds the key. Before them, each provider whose engine is the Agent SDK has a line with what it
+spent this month from the API credits, then a line that says where the balance is (`agent-sdk.md`,
+"Spending").
 
 ## What stays Claude's
 

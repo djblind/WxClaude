@@ -10,13 +10,16 @@ statistics of the whole workspace.
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Protocol
 
 from wxclaude.core.claude.usage import UsageTracker
+from wxclaude.core.config.credit_ledger import CreditLedger
 from wxclaude.core.config.provider_methods import credit_method, unavailable_line
 from wxclaude.core.config.providers import Provider, ProviderStore
 from wxclaude.core.config.workspace_stats import WorkspaceStats
 from wxclaude.core.errors import KeyVaultError, ProviderError
+from wxclaude.i18n import _
 
 
 class UsageView(Protocol):
@@ -56,16 +59,23 @@ class UsagePresenter:
         usage: UsageTracker,
         stats: Callable[[], WorkspaceStats | None],
         providers: ProviderStore | None = None,
+        credits: Path | None = None,
     ) -> None:
         self._view = view
         self._usage = usage
         self._stats = stats  # the statistics of the current workspace
         self._providers = providers
+        self._credits = credits  # the ledger of the spending of the API credits (None: none)
 
     def show_gauges(self) -> None:
-        """The gauges of the subscription, then the credit of the providers that tell it. The
-        dialog opens when the credits are known (at once if no provider has any to tell)."""
-        gauges = self._usage.gauge_lines(datetime.now())
+        """The gauges of the subscription, what the Agent SDK providers spent this month, then the
+        credit of the providers that tell it. The dialog opens when the credits are known (at once
+        if no provider has any to tell)."""
+        now = datetime.now()
+        gauges = self._usage.gauge_lines(now)
+        spending = self._spending_lines(now.strftime("%Y-%m"))
+        if spending:
+            gauges = [*gauges, "", *spending]
         requests = self._requests()
         if not requests:
             self._view.show_gauges(gauges)
@@ -84,6 +94,24 @@ class UsagePresenter:
         self._view.show_statistics(lines)
 
     # -- inside ---------------------------------------------------------------------------
+
+    def _spending_lines(self, month: str) -> list[str]:
+        """What each provider of the Agent SDK spent in ``month`` (``credit_ledger.py``), and
+        where the balance is to be seen; nothing when there is no such provider."""
+        store = self._providers
+        sdk = [] if store is None else [p for p in store.providers() if p.uses_sdk]
+        if not sdk:
+            return []
+        ledger = CreditLedger.load(self._credits)
+        spent = _("{name}: {amount} dollars spent this month from the API credits, at list price.")
+        lines = [
+            spent.format(name=provider.name, amount=f"{ledger.spent(provider.id, month):.2f}")
+            for provider in sdk
+        ]
+        lines.append(
+            _("The balance left is on the console of Anthropic: platform.claude.com, Billing.")
+        )
+        return lines
 
     def _requests(self) -> list[_Request]:
         """The providers with a key saved and a method to ask their credit. Keys are decrypted

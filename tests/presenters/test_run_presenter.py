@@ -34,7 +34,8 @@ from wxclaude.core.claude.session_reader import Session
 from wxclaude.core.claude.tasks import Task
 from wxclaude.core.claude.usage import UsageTracker
 from wxclaude.core.config.agents import Agent
-from wxclaude.core.config.providers import Provider, ProviderStore
+from wxclaude.core.config.credit_ledger import CreditLedger
+from wxclaude.core.config.providers import ENGINE_SDK, Provider, ProviderStore
 from wxclaude.core.config.settings import Settings
 from wxclaude.core.config.workspace_stats import WorkspaceStats
 from wxclaude.core.conversation.messages import Message, Usage
@@ -586,6 +587,30 @@ def test_the_announcements_name_the_provider_that_answers(tmp_path: Path) -> Non
         == "DeepSeek is thinking."
     )
     assert AnnouncementCenter.text(Announce.CLAUDE_THINKING) == "Claude is thinking."
+
+
+def test_a_message_of_an_agent_sdk_provider_is_counted_in_the_spending_of_its_credits(
+    tmp_path: Path,
+) -> None:
+    store = ProviderStore(FakeVault())
+    store.add(Provider(id="api", name="API", base_url="https://x", tiers=["m"], engine=ENGINE_SDK))
+    store.set_key("api", "sk-1")
+    settings = Settings.load(tmp_path / "settings.json")
+    shared = Shared(settings, UsageTracker(), FakeClaudeFiles(), None, store)
+    shared.usage.start_conversation(0.0)
+    links = RunLinks(
+        workspace=lambda: tmp_path,
+        conversation_id=lambda: CONVERSATION,
+        conversation_name=lambda: "Notes",
+        fork_from=lambda: "",
+        is_closing=lambda: False,
+        state_changed=lambda: None,
+    )
+    presenter = RunPresenter(FakeView(), FakeRunner(), shared, links)
+    assert presenter.start("hello", Agent("m", "low", "manual", "api"))
+    presenter.on_event(TurnResult(False, "success", "", None, None, 0.125, 1))
+    ledger = CreditLedger.load(settings.credits_path)
+    assert sum(ledger.spent("api", month) for month in ledger.months) == 0.125
 
 
 class _UnreadableFiles(FakeClaudeFiles):

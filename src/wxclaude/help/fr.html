@@ -149,6 +149,9 @@ Une fois votre quota d'abonnement atteint, vous pouvez ainsi continuer avec ces 
 <p>La conversation reste la même : Claude Code et l'Agent SDK partagent l'historique.
 Sans carte bancaire enregistrée sur la console, rien n'est facturé : une fois les crédits du mois épuisés, la réponse dit que le solde est insuffisant.
 La transmission « Relayée » ne s'applique pas à ce moteur : la clé est alors transmise de façon masquée.</p>
+<p>Une clé API ne permet pas de demander le solde restant. WxClaude additionne donc lui-même le coût de chaque message envoyé par ce moteur, au prix catalogue.
+La boîte de dialogue de jauge indique, pour chaque fournisseur Agent SDK, ce qu'il a dépensé ce mois-ci, par exemple « API : 3.42 dollars dépensés ce mois-ci sur les crédits API ».
+Le solde lui-même se lit sur la console d'Anthropic : platform.claude.com, page Billing (facturation).</p>
 <h3>Protection des clés API</h3>
 <p>Les clés d'autorisation des fournisseurs sont chiffrées avec votre compte Windows.
 Plusieurs méthodes de transmission des clés à Claude Code sont possibles :</p>

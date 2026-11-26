@@ -68,6 +68,19 @@ the same body as for the CLI. *Interrupt* cancels the message, which closes the 
 ends with `TurnEnded`. A failure of the SDK (the program cannot start, the CLI stops) is a diagnostic
 of `TurnEnded` with the exit code 1.
 
+## Spending
+
+An API key cannot ask for the balance of the credits (only an admin key of the organization could
+read the costs, and it opens the whole organization). So WxClaude counts it itself: the cost of each
+message of an Agent SDK provider (the `total_cost_usd` of the result minus the total before, as for
+the statistics, at list price) is added to `credits.json` beside the settings, by month (`YYYY-MM`,
+local time) and provider (`core/config/credit_ledger.py`, through `StatsRecorder`). The file is read
+again before each addition, so two windows do not erase each other. The dialog *Usage gauge* shows,
+for each Agent SDK provider, what it spent this month, then says that the balance is on the console
+(platform.claude.com, Billing). A message whose cost is not known (the total of the session before it
+was not known) is not counted; the credits of the plan are renewed by billing period, which may not
+be the calendar month.
+
 ## Packaging
 
 `claude-agent-sdk` is a dependency. It carries its own claude program (about 400 MB), which the
@@ -76,5 +89,6 @@ The rename of a conversation and the gauges stay Claude Code's (`/rename`, `/usa
 
 ## Not done
 
-- No gauge of the credits: the console of Anthropic has no API for the balance with a key of the API.
+- No balance of the credits: the console of Anthropic has no API for it with a key of the API; only
+  what WxClaude spent is shown ("Spending").
 - "Credit balance too low" is shown as the CLI gives it, not as an announcement of its own.

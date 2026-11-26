@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from wxclaude.core.claude.events import TurnResult
+from wxclaude.core.config.credit_ledger import CreditLedger
 from wxclaude.core.config.workspace_stats import WorkspaceStats
 from wxclaude.core.conversation.messages import Usage
 from wxclaude.presenters.stats_recorder import StatsRecorder
@@ -131,3 +132,30 @@ def test_each_message_is_written_to_the_file(tmp_path: Path) -> None:
     setup.record()
     again = WorkspaceStats.load(tmp_path / "work", tmp_path / "workspaces")
     assert (again.existed, again.messages) == (True, 1)
+
+
+def test_a_message_of_the_agent_sdk_adds_its_cost_to_the_spending_of_the_month(
+    tmp_path: Path,
+) -> None:
+    store = tmp_path / "credits.json"
+    errors: list[str] = []
+    recorder = StatsRecorder(
+        lambda: None, errors.append, now=lambda: datetime(2026, 11, 26), credits=lambda: store
+    )
+    for provider, cost in (("api", 0.25), ("", 0.25), ("api", 0.25), ("api", None)):
+        recorder.start_message(provider)  # the second does not spend the credits
+        recorder.record(_result(), conversation_id="c", model="m", cost=cost)
+    assert CreditLedger.load(store).spent("api", "2026-11") == 0.5
+    assert errors == []
+
+
+def test_a_spending_that_cannot_be_saved_is_reported_once(tmp_path: Path) -> None:
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file, not a folder", encoding="utf-8")
+    errors: list[str] = []
+    recorder = StatsRecorder(lambda: None, errors.append, credits=lambda: blocker / "credits.json")
+    for _ in range(2):
+        recorder.start_message("a")
+        recorder.record(_result(), conversation_id="c", model="m", cost=1.0)
+    assert len(errors) == 1
+    assert errors[0].startswith("The spending of the API credits could not be saved.")

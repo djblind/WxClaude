@@ -164,6 +164,7 @@ class MainWindow(wx.Frame):
             self._usage,
             lambda: self._workspaces.stats,
             self.providers,
+            self._settings.credits_path,
         )
 
     def _build_panel(self, runner: ClaudeRunner) -> None:

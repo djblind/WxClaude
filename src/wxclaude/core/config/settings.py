@@ -126,6 +126,11 @@ class Settings:
         """The file of the AI providers and their keys, beside the settings (None: in memory)."""
         return None if self.store is None else self.store.parent / "providers.json"
 
+    @property
+    def credits_path(self) -> Path | None:
+        """The ledger of what the Agent SDK providers spent, beside the settings (None: none)."""
+        return None if self.store is None else self.store.parent / "credits.json"
+
     def shortcut_for(self, command: ConfigurableCommand) -> str:
         """The shortcut of ``command`` (empty: none)."""
         return self.shortcuts.get(command.id, command.default)

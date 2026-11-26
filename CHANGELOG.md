@@ -6,6 +6,9 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: the dialog *Usage gauge* tells what each *Agent SDK* provider spent this month from the API
+  credits, at list price (an API key cannot ask for the balance left, which is on the console of
+  Anthropic); WxClaude adds up the cost of each of their messages in `credits.json`.
 - Fixed: renaming a conversation no longer freezes the window for the few seconds Claude Code takes:
   it is done in the background, and nothing is sent until the new name is there.
 - Fixed: the remote control no longer answers `timeout` for a command that the window started at the
@@ -15,6 +18,8 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 - Fixed: the key relay, stopped and started again at once, could keep two idle watchers instead of one.
 - Fixed: the key relay reads the small body of a request it refuses before closing, so the client gets the
   refusal instead of a connection reset by Windows.
+- Fixed: the same for the permission server of the hook channel: a refused request (wrong address, body
+  too big) is read first, so the CLI gets the refusal.
 - Added: a provider can use the engine *Agent SDK (API credits of the plan)*: its messages go through the
   official Claude Agent SDK, which the API credits of the Max, Ultra and Team plans pay for, while Claude
   Code does not. Once the quota of the plan is reached, a conversation can go on with those credits

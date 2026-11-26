@@ -1,14 +1,16 @@
 """The usage gauge and the statistics, with a fake view: no wx, no window."""
 
 from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 from fake_vault import FakeVault
 
 from wxclaude.core.claude.usage import UsageTracker
+from wxclaude.core.config.credit_ledger import record_spending
 from wxclaude.core.config.provider_methods import DeepSeekCredit
-from wxclaude.core.config.providers import KEY_NONE, Provider, ProviderStore
+from wxclaude.core.config.providers import ENGINE_SDK, KEY_NONE, Provider, ProviderStore
 from wxclaude.core.config.workspace_stats import WorkspaceStats
 from wxclaude.core.errors import BalanceError, KeyVaultError
 from wxclaude.presenters.usage_presenter import UsagePresenter
@@ -156,3 +158,32 @@ def test_the_statistics_without_a_workspace_are_the_spending_only() -> None:
     assert view.statistics == [
         ["No message sent yet in this conversation since it was opened here."]
     ]
+
+
+def test_the_spending_of_the_agent_sdk_providers_of_the_month_follows_the_gauges(
+    tmp_path: Path,
+) -> None:
+    ledger = tmp_path / "credits.json"
+    api = Provider(
+        id="", name="API", base_url="https://api.anthropic.com", tiers=["m"], engine=ENGINE_SDK
+    )
+    store = store_with(api, deepseek(credit_method="none"))
+    record_spending(ledger, api.id, datetime.now().strftime("%Y-%m"), 3.416)
+    record_spending(ledger, api.id, "2000-01", 50.0)  # another month
+    view = FakeView()
+    UsagePresenter(view, UsageTracker(), lambda: None, store, ledger).show_gauges()
+    lines = view.gauges[0]
+    assert lines[1:] == [
+        "",
+        "API: 3.42 dollars spent this month from the API credits, at list price.",
+        "The balance left is on the console of Anthropic: platform.claude.com, Billing.",
+    ]
+
+
+def test_an_agent_sdk_provider_that_spent_nothing_says_zero() -> None:
+    api = Provider(
+        id="", name="API", base_url="https://api.anthropic.com", tiers=["m"], engine=ENGINE_SDK
+    )
+    view = FakeView()
+    UsagePresenter(view, UsageTracker(), lambda: None, store_with(api)).show_gauges()
+    assert view.gauges[0][2].startswith("API: 0.00 dollars")
