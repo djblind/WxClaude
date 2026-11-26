@@ -15,6 +15,9 @@ It is not a terminal.</p>
 <p>WxClaude needs the Claude Code program.
 Install it by following the <a href="https://code.claude.com/docs/en/overview">Claude Code documentation</a>.</p>
 <p>Check the installation in a terminal with <code>claude --version</code>.</p>
+<p>If you have the Claude application for Windows, there is nothing to install: it holds its own copy of Claude Code, which WxClaude finds by itself when <code>claude</code> is not in the PATH.
+If it finds several (for example one per account, if you open the application with two accounts), it takes the most recent: it is the same program.
+The Claude account WxClaude uses does not depend on that copy: it is the one you signed in with in WxClaude (Tools menu, Sign in to Claude).</p>
 <p>To use Claude Code, you must sign in:</p>
 <ul>
 <li>in a terminal, run <code>claude auth login</code> and follow the instructions;</li>

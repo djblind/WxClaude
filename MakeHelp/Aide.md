@@ -14,6 +14,10 @@ Installez-le en suivant la [documentation de Claude Code](https://code.claude.co
 
 Vérifiez l'installation dans un terminal avec `claude --version`.
 
+Si vous avez l'application Claude pour Windows, vous n'avez rien à installer : elle contient sa propre copie de Claude Code, que WxClaude trouve tout seul quand `claude` n'est pas dans le PATH.
+S'il en trouve plusieurs (par exemple une par compte, si vous ouvrez l'application avec deux comptes), il prend la plus récente : c'est le même programme.
+Le compte Claude utilisé par WxClaude ne dépend pas de cette copie : c'est celui avec lequel vous vous êtes connecté dans WxClaude (menu Outils, Se connecter à Claude).
+
 Pour utiliser Claude Code, il est obligatoire de s'authentifier :
 
 - dans un terminal, lancez `claude auth login` et suivez les instructions ;

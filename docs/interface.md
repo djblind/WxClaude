@@ -15,7 +15,7 @@
 - Buttons: *Send*, *Send with the alternative agent* (their labels show the current shortcuts) and
   *Interrupt Claude* (active only while Claude is answering; it also stops the programs Claude
   started). While Claude answers, Send is greyed; the prompt field stays usable.
-- **Claude Code not found**: once the window is up, if `claude` cannot be started (not in the PATH, or
+- **Claude Code not found**: once the window is up, if `claude` cannot be started (not in the PATH nor in the folders of the Claude application, or
   the file chosen in Preferences > Claude does not exist) a message says "Claude Code was not found on this
   computer. Install it, or give its path in File > Preferences > Claude." with the buttons *Open the
   Preferences* (on the Claude page) and *Close* (the default). It is said once per launch. The message
@@ -421,7 +421,10 @@ Claude are then offered. A provider that was deleted shows as Claude. See `provi
 - **General**: language (applies at the next start); at startup, open the last workspace; *Maximize
   the window at startup* (checked by default; applies at the next start).
 - **Claude** (after General): *Automatic search for claude-p* (checked by default: `claude` is looked
-  for in the PATH; the `claude.cmd` of an npm install is replaced by the program it starts, see
+  for in the PATH, then in the folders of the Claude application for Windows, which keeps its own copy in
+  `<its data>\claude-code\<version>\<build>\claude.exe` under `%APPDATA%` or `%LOCALAPPDATA%` (one per
+  data folder, so one per account opened with `--user-data-dir`): the most recent version is taken, then
+  the native installer's `~\.local\bin\claude.exe`, see `core/claude/claude_locations.py`; the `claude.cmd` of an npm install is replaced by the program it starts, see
   `core/claude/cmd_shim.py`); *Path of claude-p* and *Select…* (file dialog), both greyed while the search is
   automatic. OK is refused, with the focus on the path, if the search is off and the path is empty
   or not a file. *Interface type* (a drop-down list, *Stdio protocol* by default or *HTTP hook*): how

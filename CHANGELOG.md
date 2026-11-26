@@ -6,6 +6,9 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: when `claude` is not in the PATH, WxClaude finds the copy of Claude Code that the Claude
+  application for Windows keeps in its own folder (the most recent one, if several accounts each have
+  theirs), or the one of the native installer: no script is needed to start WxClaude.
 - Added: a local provider can load its models itself: with *Model loading* set to *LM Studio* in its
   form, WxClaude checks before each message that the model chosen is loaded; if not, it unloads the
   other models when there is not enough memory, then loads it. One WxClaude, started normally, can then
