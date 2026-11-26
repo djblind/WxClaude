@@ -161,7 +161,8 @@ Dans les préférences, le formulaire d'un fournisseur permet de définir :
 - un nom et une adresse (URL) ;
 - une clé API, ou « aucune » pour un serveur local ;
 - la liste des modèles disponibles et des variables de configuration.
-- le moteur : Claude Code, ou l'Agent SDK pour les crédits API de l'abonnement (voir plus bas).
+- le moteur : Claude Code, ou l'Agent SDK pour les crédits API de l'abonnement (voir plus bas) ;
+- le chargement des modèles, pour un serveur local LM Studio (voir plus bas).
 
 ### Utiliser les crédits API de l'abonnement
 
@@ -181,6 +182,22 @@ La transmission « Relayée » ne s'applique pas à ce moteur : la clé est alor
 Une clé API ne permet pas de demander le solde restant. WxClaude additionne donc lui-même le coût de chaque message envoyé par ce moteur, au prix catalogue.
 La boîte de dialogue de jauge indique, pour chaque fournisseur Agent SDK, ce qu'il a dépensé ce mois-ci, par exemple « API : 3.42 dollars dépensés ce mois-ci sur les crédits API ».
 Le solde lui-même se lit sur la console d'Anthropic : platform.claude.com, page Billing (facturation).
+
+### Changer de modèle local sans relancer WxClaude
+
+Un serveur local garde ses modèles dans la mémoire de l'ordinateur, qui a rarement la place pour deux gros modèles.
+Avec LM Studio, WxClaude peut charger lui-même le modèle de chaque message : dans le formulaire du fournisseur, choisissez « LM Studio » dans la liste « Chargement des modèles ».
+
+Avant chaque message, WxClaude vérifie alors que le modèle choisi est chargé.
+S'il ne l'est pas, il regarde s'il reste assez de mémoire à côté des modèles déjà chargés ; sinon, il les décharge, puis il charge le bon modèle.
+WxClaude l'annonce : « Pas assez de mémoire : déchargement de… », puis « Chargement du modèle…, patience ».
+Le premier message après un changement de modèle attend donc le chargement, qui peut prendre quelques minutes pour un gros modèle.
+
+- Les noms des modèles du fournisseur sont les noms de LM Studio, par exemple `qwen3.5-122b-a10b-claudecode`.
+- La variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` du fournisseur donne la taille du contexte avec laquelle le modèle est chargé, par exemple 131072.
+- Si le serveur de LM Studio ne répond pas, WxClaude le démarre.
+
+Il suffit alors d'ouvrir WxClaude normalement : dans la boîte de dialogue Agent (Ctrl+Maj+A), vous choisissez Claude sur votre abonnement, l'Agent SDK sur les crédits API, ou l'un de vos modèles locaux.
 
 ### Protection des clés API
 

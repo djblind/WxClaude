@@ -10,12 +10,14 @@ from wxclaude.i18n import _
 API_TIMEOUT = "API_TIMEOUT_MS"
 MAX_CONTEXT = "CLAUDE_CODE_MAX_CONTEXT_TOKENS"
 COMPACT_WINDOW = "CLAUDE_CODE_AUTO_COMPACT_WINDOW"
+COMPACT_PERCENT = "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"  # a percentage: 1 to 100
 MAX_OUTPUT = "CLAUDE_CODE_MAX_OUTPUT_TOKENS"
 
 #: The variables a provider can set, in the order of the form. They describe the server and its
 #: model (the wait, the window of context, the length of an answer); what depends on the folder
 #: (the output of a command, the reading of a file) is set in the workspace settings.
-PROVIDER_VARIABLES = (API_TIMEOUT, MAX_CONTEXT, COMPACT_WINDOW, MAX_OUTPUT)
+PROVIDER_VARIABLES = (API_TIMEOUT, MAX_CONTEXT, COMPACT_WINDOW, COMPACT_PERCENT, MAX_OUTPUT)
+_PERCENT_MAX = 100
 
 
 def is_valid_value(value: str) -> bool:
@@ -31,4 +33,6 @@ def variables_problem(values: dict[str, str]) -> str | None:
     for name, value in values.items():
         if not is_valid_value(value):
             return _("The value of {name} is a whole number above zero.").format(name=name)
+        if name == COMPACT_PERCENT and int(value) > _PERCENT_MAX:
+            return _("The value of {name} is a percentage, from 1 to 100.").format(name=name)
     return None

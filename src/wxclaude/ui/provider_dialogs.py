@@ -1,9 +1,10 @@
 """The dialogs of the Providers page: the form of a provider and the entry of its key."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import wx
 
+from wxclaude.core.config.model_loading import LOADING_METHODS, LoadingMethod
 from wxclaude.core.config.provider_methods import (
     CREDIT_METHODS,
     MODELS_METHODS,
@@ -96,6 +97,9 @@ class ProviderDialog(wx.Dialog):
         self._credit_method = self._choice(
             sizer, _("Gauge retrie&val"), CREDIT_METHODS, provider.credit_method
         )
+        self._loading_method = self._choice(
+            sizer, _("Model &loading"), LOADING_METHODS, provider.loading_method
+        )
         self._check_button = wx.Button(self, label=_("&Check the data retrieved"))
         sizer.Add(self._check_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         sizer.Add(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL), 0, wx.EXPAND | wx.ALL, 8)
@@ -183,7 +187,7 @@ class ProviderDialog(wx.Dialog):
         self,
         sizer: wx.BoxSizer,
         label: str,
-        methods: tuple[ModelsMethod, ...] | tuple[CreditMethod, ...],
+        methods: Sequence[ModelsMethod | CreditMethod | LoadingMethod],
         chosen: str,
     ) -> wx.Choice:
         """A list of methods; one that is not known shows as "no method", the first."""
@@ -229,6 +233,7 @@ class ProviderDialog(wx.Dialog):
                 credit_method=self._credit_id,
                 env=self._variables.env,
                 engine=ENGINES[self._engine.GetSelection()],
+                loading_method=LOADING_METHODS[self._loading_method.GetSelection()].id,
             ),
             had_key=kept.had_key,
             key=kept.key if key_source == KEY_STORED else "",

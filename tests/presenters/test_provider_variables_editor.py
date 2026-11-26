@@ -27,7 +27,7 @@ def provider(**changes: object) -> Provider:
 
 def test_the_list_holds_the_four_models_then_the_variables() -> None:
     editor = ProviderVariablesEditor(provider())
-    assert len(editor) == 8
+    assert len(editor) == 9
     assert editor.lines == [
         "Small model = flash",
         "Medium model = flash",
@@ -36,6 +36,7 @@ def test_the_list_holds_the_four_models_then_the_variables() -> None:
         "API_TIMEOUT_MS = 600000",
         "CLAUDE_CODE_MAX_CONTEXT_TOKENS = (not set)",
         "CLAUDE_CODE_AUTO_COMPACT_WINDOW = (not set)",
+        "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = (not set)",
         "CLAUDE_CODE_MAX_OUTPUT_TOKENS = (not set)",
     ]
 

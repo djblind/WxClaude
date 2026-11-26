@@ -5,6 +5,7 @@ from wxclaude.core.claude.events import (
     AssistantText,
     Compacted,
     McpServer,
+    ModelLoading,
     PermissionDenied,
     SessionInit,
     Thinking,
@@ -159,3 +160,10 @@ def test_the_warning_about_the_claude_login_is_a_notice_too() -> None:
     )
     crashed = turn_outcome(None, TurnEnded(2, False, f"{warning}\nconnection refused"))
     assert crashed.details == "connection refused"
+
+
+def test_the_loading_of_a_model_is_said() -> None:
+    unloading = progress_for(ModelLoading("unload", ("small", "medium")))
+    assert unloading == Progress(Announce.MODEL_UNLOADING, {"models": "small, medium"})
+    loading = progress_for(ModelLoading("load", ("big",)))
+    assert loading == Progress(Announce.MODEL_LOADING, {"models": "big"})

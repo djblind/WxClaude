@@ -24,6 +24,7 @@ from typing import IO
 from wxclaude.core.claude.cmd_shim import resolve_shim
 from wxclaude.core.claude.events import (
     GaugesRead,
+    ModelLoading,
     PermissionRequest,
     RateWindow,
     RunEvent,
@@ -49,7 +50,14 @@ from wxclaude.core.claude.sdk_run import SdkRun, sdk_available
 from wxclaude.core.claude.stream import parse_stream_line
 from wxclaude.core.claude.usage_text import parse_usage
 from wxclaude.core.config.agents import Agent
-from wxclaude.core.errors import ClaudeNotFoundError, RunnerError, StreamParseError
+from wxclaude.core.config.model_loading import LoadingMethod, loading_method
+from wxclaude.core.config.providers import Provider
+from wxclaude.core.errors import (
+    ClaudeNotFoundError,
+    ModelLoadError,
+    RunnerError,
+    StreamParseError,
+)
 from wxclaude.core.security.restricted import (
     RESTRICTED_ARGUMENTS,
     restricted_permission_mode,
@@ -99,7 +107,7 @@ def build_arguments(request: RunRequest, channel: PermissionChannel) -> list[str
     agent = request.agent
     if not (agent.model and agent.effort and agent.permission_mode):
         raise RunnerError("The agent must have a model, an effort and a permission mode.")
-    parts = [channel.settings(), provider_settings(request.provider)]
+    parts = [channel.settings(), provider_settings(request.provider, agent.model or "")]
     if request.restricted:
         parts.append(restricted_settings(request.cwd))
     mode = (
@@ -177,12 +185,13 @@ class ClaudeRunner:
         self._process: subprocess.Popen[str] | None = None
         self._channel: PermissionChannel | None = None
         self._sdk: SdkRun | None = None  # a message sent through the Agent SDK (``sdk_run``)
+        self._preparing = False  # the model of a message is being loaded (``model_loading``)
         self._interrupted = False
         self._lock = threading.Lock()
 
     def _busy(self) -> bool:
         """Is something running? (Called under ``_lock``.)"""
-        return self._process is not None or self._sdk is not None
+        return self._process is not None or self._sdk is not None or self._preparing
 
     def is_available(self) -> bool:
         """Can the CLI be started? (Always, with a ``command`` given: the tests.)"""
@@ -207,11 +216,60 @@ class ClaudeRunner:
     def start(self, request: RunRequest, on_event: Callable[[RunEvent], None]) -> None:
         """Start ``claude`` for ``request``; events then come through ``on_event``.
 
-        A provider whose engine is the Agent SDK is sent through it (``sdk_run``). Raises
+        A provider whose engine is the Agent SDK is sent through it (``sdk_run``). A provider
+        whose models WxClaude loads has the model loaded first, in a thread (``_prepare``). Raises
         ``ClaudeNotFoundError`` or ``RunnerError`` if it cannot be started, or if a message is
         already running.
         """
         command = self._command if self._command is not None else find_claude(self.claude_path)
+        provider = request.provider.provider if request.provider is not None else None
+        if provider is not None and provider.loads_models:
+            with self._lock:
+                if self._busy():
+                    raise RunnerError("Claude is already answering.")
+                self._preparing = True
+                self._interrupted = False
+            method = loading_method(provider.loading_method)
+            arguments = (method, provider, command, request, on_event)
+            threading.Thread(target=self._prepare, args=arguments, daemon=True).start()
+            return
+        self._launch(command, request, on_event)
+
+    def _prepare(
+        self,
+        method: LoadingMethod,
+        provider: Provider,
+        command: Sequence[str],
+        request: RunRequest,
+        on_event: Callable[[RunEvent], None],
+    ) -> None:
+        """Load the model of ``request`` on the server of ``provider``, then start the message. A
+        failure, or an interruption meanwhile, ends the message without starting the CLI."""
+        failure = ""
+        try:
+            method.prepare(
+                provider.base_url,
+                request.agent.model or "",
+                provider.context_length,
+                lambda action, models: on_event(ModelLoading(action, tuple(models))),
+            )
+        except ModelLoadError as error:
+            failure = str(error)
+        with self._lock:
+            self._preparing = False
+            interrupted = self._interrupted
+        if failure or interrupted:
+            on_event(TurnEnded(None, interrupted, failure))
+            return
+        try:
+            self._launch(command, request, on_event)
+        except RunnerError as error:
+            on_event(TurnEnded(None, False, str(error)))
+
+    def _launch(
+        self, command: Sequence[str], request: RunRequest, on_event: Callable[[RunEvent], None]
+    ) -> None:
+        """Start the CLI (or the Agent SDK) for ``request``."""
         if request.provider is not None and request.provider.provider.uses_sdk:
             self._start_sdk(command, request, on_event)
             return
@@ -296,47 +354,9 @@ class ClaudeRunner:
     def rename_session(
         self, session_id: str, name: str, cwd: Path, *, restricted: bool = False
     ) -> None:
-        """Give the session ``session_id`` of the folder ``cwd`` the name ``name``.
-
-        It is the ``/rename`` command of the CLI, run as the prompt of ``claude -p --resume``: the
-        CLI writes the name in the session file itself, sends nothing to the model and answers at
-        once. ``restricted``: the folder is not trusted. Raises ``ClaudeNotFoundError`` or
-        ``RunnerError``.
-        """
-        command = self._command if self._command is not None else find_claude(self.claude_path)
-        argv = [
-            *command,
-            "-p",
-            f"/rename {name}",
-            "--resume",
-            session_id,
-            "--output-format",
-            "json",
-            *(RESTRICTED_ARGUMENTS if restricted else ()),
-        ]
-        try:
-            done = subprocess.run(
-                argv,
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                cwd=cwd,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=_RENAME_WAIT_SECONDS,
-                check=False,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
-        except OSError as error:
-            raise RunnerError(f"Cannot start {argv[0]}: {error}") from error
-        except subprocess.TimeoutExpired as error:
-            raise RunnerError("Claude did not answer in time.") from error
-        reply = _last_json_object(done.stdout)
-        if done.returncode != 0 or reply.get("is_error"):
-            detail = str(
-                reply.get("result") or done.stderr.strip() or f"exit code {done.returncode}"
-            )
-            raise RunnerError(detail)
+        """Give the session ``session_id`` of the folder ``cwd`` the name ``name``
+        (``_rename_session``). Raises ``ClaudeNotFoundError`` or ``RunnerError``."""
+        _rename_session(self.base_command(), session_id, name, cwd, restricted=restricted)
 
     def read_usage(
         self, cwd: Path, on_event: Callable[[RunEvent], None], *, restricted: bool = False
@@ -429,6 +449,7 @@ class ClaudeRunner:
         with self._lock:
             process, sdk = self._process, self._sdk
             if process is None and sdk is None:
+                self._interrupted = self._preparing  # the CLI will not be started
                 return
             self._interrupted = True
         if sdk is not None:
@@ -476,6 +497,49 @@ class ClaudeRunner:
         run.channel.close()
         stderr = "".join(run.stderr_lines).strip()
         run.on_event(TurnEnded(exit_code, interrupted, stderr, run.diagnostics))
+
+
+def _rename_session(
+    command: Sequence[str], session_id: str, name: str, cwd: Path, *, restricted: bool = False
+) -> None:
+    """Give the session ``session_id`` of the folder ``cwd`` the name ``name``.
+
+    It is the ``/rename`` command of the CLI, run as the prompt of ``claude -p --resume``: the
+    CLI writes the name in the session file itself, sends nothing to the model and answers at
+    once. ``restricted``: the folder is not trusted. Raises ``ClaudeNotFoundError`` or
+    ``RunnerError``.
+    """
+    argv = [
+        *command,
+        "-p",
+        f"/rename {name}",
+        "--resume",
+        session_id,
+        "--output-format",
+        "json",
+        *(RESTRICTED_ARGUMENTS if restricted else ()),
+    ]
+    try:
+        done = subprocess.run(
+            argv,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            cwd=cwd,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=_RENAME_WAIT_SECONDS,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except OSError as error:
+        raise RunnerError(f"Cannot start {argv[0]}: {error}") from error
+    except subprocess.TimeoutExpired as error:
+        raise RunnerError("Claude did not answer in time.") from error
+    reply = _last_json_object(done.stdout)
+    if done.returncode != 0 or reply.get("is_error"):
+        detail = str(reply.get("result") or done.stderr.strip() or f"exit code {done.returncode}")
+        raise RunnerError(detail)
 
 
 def _last_json_object(text: str) -> dict[str, object]:

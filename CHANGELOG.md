@@ -6,6 +6,12 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: a local provider can load its models itself: with *Model loading* set to *LM Studio* in its
+  form, WxClaude checks before each message that the model chosen is loaded; if not, it unloads the
+  other models when there is not enough memory, then loads it. One WxClaude, started normally, can then
+  switch between Claude, the API credits and each local model from the Agent dialog.
+- Added: a provider can set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` (the percentage of the window at which the
+  conversation is compacted).
 - Added: the dialog *Usage gauge* tells what each *Agent SDK* provider spent this month from the API
   credits, at list price (an API key cannot ask for the balance left, which is on the console of
   Anthropic); WxClaude adds up the cost of each of their messages in `credits.json`.

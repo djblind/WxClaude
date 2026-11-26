@@ -217,11 +217,28 @@ def test_the_form_has_one_list_of_the_models_and_the_variables(
             "API_TIMEOUT_MS = (not set)",
             "CLAUDE_CODE_MAX_CONTEXT_TOKENS = (not set)",
             "CLAUDE_CODE_AUTO_COMPACT_WINDOW = (not set)",
+            "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = (not set)",
             "CLAUDE_CODE_MAX_OUTPUT_TOKENS = (not set)",
         ]
         assert dialog._value.GetName() == "Value of Small model"
         assert "haiku" in dialog._explanation.GetValue()
         assert dialog.result.provider.tiers == []  # nothing typed: the presenter refuses it
+    finally:
+        dialog.Destroy()
+
+
+def test_the_loading_of_the_models_is_chosen_in_the_form(
+    wx_app: wx.App, store: ProviderStore
+) -> None:
+    given = deepseek()
+    given.loading_method = "lmstudio"
+    dialog = ProviderDialog(None, store, ProviderEdit(given, had_key=True))
+    try:
+        assert dialog._loading_method.GetName() == "Model loading"
+        assert dialog._loading_method.GetStringSelection() == "LM Studio"
+        assert dialog.result.provider.loading_method == "lmstudio"
+        dialog._loading_method.SetSelection(0)
+        assert dialog.result.provider.loading_method == "none"
     finally:
         dialog.Destroy()
 

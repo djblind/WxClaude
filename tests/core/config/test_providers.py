@@ -512,3 +512,29 @@ def test_a_key_that_cannot_be_decrypted_gives_a_clear_error(tmp_path: Path) -> N
 def test_the_key_of_a_provider_that_needs_none() -> None:
     assert not local().needs_key
     assert deepseek().needs_key
+
+
+def test_the_loading_of_the_models_is_kept_and_only_for_a_local_server() -> None:
+    loading = replace(
+        local(), loading_method="lmstudio", env={"CLAUDE_CODE_MAX_CONTEXT_TOKENS": "8192"}
+    )
+    again = Provider.from_dict(json.loads(json.dumps(loading.to_dict())))
+    assert again is not None
+    assert again.loading_method == "lmstudio"
+    assert again.loads_models
+    assert again.context_length == 8192
+    assert not local().loads_models
+    assert local().context_length is None
+    assert not CLAUDE.loads_models
+    old = local().to_dict()
+    del old["loading_method"]
+    restored = Provider.from_dict(old)
+    assert restored is not None
+    assert not restored.loads_models
+
+
+def test_the_percentage_of_the_compaction_is_from_1_to_100() -> None:
+    assert replace(local(), env={"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"}).problem() is None
+    problem = replace(local(), env={"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "180"}).problem()
+    assert problem is not None
+    assert "percentage" in problem

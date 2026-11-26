@@ -51,18 +51,25 @@ class ProviderLaunch:
         return not self.provider.is_builtin
 
 
-def provider_settings(launch: ProviderLaunch | None) -> dict[str, object]:
+def provider_settings(launch: ProviderLaunch | None, model: str = "") -> dict[str, object]:
     """The inline settings of a provider: its address, the models its aliases stand for and the
     variables it sets (only the known ones, ``provider_variables``). Being inline they apply in a
-    restricted folder too, where the files of the project are not read."""
+    restricted folder too, where the files of the project are not read.
+
+    A provider whose models WxClaude loads (``model_loading``) has all its aliases on ``model``,
+    the model of the message: the requests the CLI makes by itself must not ask the server for
+    another model, which it would load in place of this one."""
     if launch is None or not launch.active:
         return {}
     provider = launch.provider
     relay = launch.relay
     env = {"ANTHROPIC_BASE_URL": relay.base_url if relay else provider.base_url}
+    aliases = provider.aliases
+    if provider.loads_models and model:
+        aliases = dict.fromkeys(ALIASES, model)
     for alias in ALIASES:
-        if alias in provider.aliases:
-            env[f"ANTHROPIC_DEFAULT_{alias.upper()}_MODEL"] = provider.aliases[alias]
+        if alias in aliases:
+            env[f"ANTHROPIC_DEFAULT_{alias.upper()}_MODEL"] = aliases[alias]
     for name in PROVIDER_VARIABLES:
         if is_valid_value(provider.env.get(name, "")):  # a file edited by hand may hold anything
             env[name] = provider.env[name]

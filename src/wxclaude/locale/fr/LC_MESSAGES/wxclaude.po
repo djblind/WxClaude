@@ -2058,3 +2058,42 @@ msgstr "{name} : {amount} dollars dépensés ce mois-ci sur les crédits API, au
 
 msgid "The balance left is on the console of Anthropic: platform.claude.com, Billing."
 msgstr "Le solde restant se lit sur la console d'Anthropic : platform.claude.com, page Billing."
+
+msgid "Model &loading"
+msgstr "&Chargement des modèles"
+
+msgid "LM Studio"
+msgstr "LM Studio"
+
+msgid "Not enough memory: unloading {models}."
+msgstr "Pas assez de mémoire : déchargement de {models}."
+
+msgid "Loading the model {models}, please wait."
+msgstr "Chargement du modèle {models}, patience."
+
+msgid "The value of {name} is a percentage, from 1 to 100."
+msgstr "La valeur de {name} est un pourcentage, de 1 à 100."
+
+msgid "LM Studio did not answer with its list of models."
+msgstr "LM Studio n'a pas répondu par sa liste de modèles."
+
+msgid "LM Studio does not answer at {address}. Start its server."
+msgstr "LM Studio ne répond pas à l'adresse {address}. Démarrez son serveur."
+
+msgid "LM Studio stopped answering: {reason}"
+msgstr "LM Studio a cessé de répondre : {reason}"
+
+msgid "LM Studio gave an answer that is not understood."
+msgstr "LM Studio a donné une réponse incompréhensible."
+
+msgid "This server cannot load models (error 404): it is not LM Studio, or a version older than 0.4."
+msgstr "Ce serveur ne sait pas charger de modèles (erreur 404) : ce n'est pas LM Studio, ou une version antérieure à 0.4."
+
+msgid "LM Studio has no model {model}. Check its name in the provider."
+msgstr "LM Studio n'a pas de modèle {model}. Vérifiez son nom dans le fournisseur."
+
+msgid "LM Studio could not unload {model} (error {code}). {detail}"
+msgstr "LM Studio n'a pas pu décharger {model} (erreur {code}). {detail}"
+
+msgid "LM Studio could not load {model} (error {code}). {detail}"
+msgstr "LM Studio n'a pas pu charger {model} (erreur {code}). {detail}"

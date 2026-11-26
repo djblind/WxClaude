@@ -127,6 +127,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `settings.py` | `Settings`: JSON file in the user configuration folder; only invalid or unknown values are dropped; also the places of `workspaces/` and `providers.json`. |
 | `jsonstore.py` | Reading and writing the JSON files: atomic write, `.bak` backup, damaged file set aside (`.corrupt`). |
 | `workspace_state.py` | `WorkspaceState`: per workspace, the current conversation and the main agent of each conversation, the trust of the folder (`trusted`, `approval_asked`, `existed`) and the approved record of each watched file, `WatchRecord` (`workspaces/<hash>.json`; the copies are in `workspaces/<hash>.watch/`). |
+| `model_loading.py` | Loading the model of a message on a local server before it is sent: `LoadingMethod` (`LmStudioLoading`: the models loaded, the room left from the estimate of `lms` and the free memory, unload, load) with the registry `LOADING_METHODS`; `ModelLoadError` with a message for the user. Called by the runner, in the thread of the message. |
 | `credit_ledger.py` | `CreditLedger`: what the Agent SDK providers spent from the API credits, by month and provider (`credits.json` beside the settings), read again before each addition. |
 | `workspace_stats.py` | `WorkspaceStats`: per workspace, the ledger of what all its conversations used, deleted ones included (`workspaces/<hash>.stats.json`), and the lines that show it. |
 | `shortcuts.py` | Configurable commands, shortcut notation (`Ctrl+Shift+O`), rules and conflicts. |

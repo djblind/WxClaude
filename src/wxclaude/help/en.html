@@ -134,7 +134,8 @@ Using WxClaude with a provider is possible without being signed in with a Claude
 <li>a name and an address (URL);</li>
 <li>an API key, or &quot;none&quot; for a local server;</li>
 <li>the list of available models and configuration variables.</li>
-<li>the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below).</li>
+<li>the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below);</li>
+<li>the loading of the models, for a local LM Studio server (see below).</li>
 </ul>
 <h3>Using the API credits of the plan</h3>
 <p>The Max, Ultra and Team plans give credits for the Anthropic API every month.
@@ -152,6 +153,19 @@ The &quot;Relayed&quot; transmission does not apply to this engine: the key is t
 <p>An API key cannot ask for the balance left. So WxClaude adds up the cost of each message sent by this engine itself, at list price.
 The gauge dialog tells, for each Agent SDK provider, what it spent this month, for example &quot;API: 3.42 dollars spent this month from the API credits&quot;.
 The balance itself is on the console of Anthropic: platform.claude.com, Billing page.</p>
+<h3>Switching local models without restarting WxClaude</h3>
+<p>A local server keeps its models in the memory of the computer, which rarely has room for two big models.
+With LM Studio, WxClaude can load the model of each message itself: in the form of the provider, choose &quot;LM Studio&quot; in the list &quot;Model loading&quot;.</p>
+<p>Before each message, WxClaude then checks that the chosen model is loaded.
+If it is not, it looks whether there is enough memory left next to the models already loaded; if not, it unloads them, then it loads the right model.
+WxClaude says it: &quot;Not enough memory: unloading…&quot;, then &quot;Loading the model…, please wait&quot;.
+The first message after a change of model therefore waits for the loading, which can take a few minutes for a big model.</p>
+<ul>
+<li>The names of the models of the provider are the names in LM Studio, for example <code>qwen3.5-122b-a10b-claudecode</code>.</li>
+<li>The variable <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> of the provider gives the size of the context the model is loaded with, for example 131072.</li>
+<li>If the server of LM Studio does not answer, WxClaude starts it.</li>
+</ul>
+<p>Then just open WxClaude normally: in the Agent dialog (Ctrl+Shift+A), you choose Claude on your plan, the Agent SDK on the API credits, or one of your local models.</p>
 <h3>Protection of API keys</h3>
 <p>The authorization keys of the providers are encrypted with your Windows account.
 Several methods of passing the keys to Claude Code are possible:</p>

@@ -159,6 +159,7 @@ of its form (after *Send the effort*):
 |---|---|---|
 | *Models retrieval* | *No method*, *V1* | `models_method`: `none`, `v1` (a new provider and a file from before the lists: `v1`) |
 | *Gauge retrieval* | *No method*, *DeepSeek* | `credit_method`: `none`, `deepseek` (a new provider and a file from before the lists: `none`) |
+| *Model loading* | *No method*, *LM Studio* | `loading_method`: `none`, `lmstudio` (see "Model loading") |
 
 A value that is not known reads as *No method*. WxClaude does not choose for the user: a provider that
 was added before the lists keeps its models method `v1` and has no gauge until the user picks one.
@@ -203,6 +204,41 @@ with no method or no key has no line. A failure is a line of the dialog, never a
 holds the key. Before them, each provider whose engine is the Agent SDK has a line with what it
 spent this month from the API credits, then a line that says where the balance is (`agent-sdk.md`,
 "Spending").
+
+## Model loading
+
+A local server holds its models in the memory of the computer, which rarely has room for two big ones.
+Before, a script per model had to unload the model in use, load the other one and then start
+WxClaude. Now the list *Model loading* of the form of a provider (right after *Gauge retrieval*,
+stored as `loading_method`: `none` by default, `lmstudio`) lets WxClaude do it before each message
+(`core/config/model_loading.py`, same registry pattern as the methods above). It is not offered to the
+Agent SDK engine, and Claude is never concerned.
+
+**LM Studio** (0.4 and later), through its own API on the host of the address of the provider, measured
+2026-11-26 with LM Studio and an RTX 5090 of 24 GB with 95 GB of RAM:
+
+1. `GET /api/v1/models`: the models and, for each, `loaded_instances` (`id`, `config.context_length`).
+   If the server does not answer, `lms server start` is run once and the list asked again.
+2. If the model of the message is loaded (its key or its instance id), with the context wanted, nothing
+   is done. The context wanted is the variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` of the provider; without
+   it any loaded copy will do. Loaded with another context, it is unloaded and loaded again.
+3. If other models are loaded, WxClaude checks whether there is room: the memory the model needs is the
+   estimate of `lms load <model> --estimate-only` (line *Estimated Total Memory*; the estimate does not
+   count what is already loaded), the memory free is what Windows says is available (cache included,
+   `GlobalMemoryStatusEx`) plus the free memory of the NVIDIA cards (`nvidia-smi`). Measured: the 122B
+   (estimate 78 GiB) fits when nothing is loaded (65 GiB of RAM + 23 GiB of video memory free) and not
+   next to the 27B (48 GiB free). If there is no room, or if either figure cannot be known, the other
+   models are unloaded (`POST /api/v1/models/unload` with `instance_id`), as the scripts always did.
+4. `POST /api/v1/models/load` with `model`, `parallel` 1 and `context_length` when set (15 minutes at
+   most). The API refuses `identifier`, `gpu` and `ttl` (`unrecognized_keys`): the model is known by its
+   key, and its other settings are those saved in LM Studio for it.
+
+This runs in the thread of the message (`ClaudeRunner._prepare`): the interface says *Not enough memory:
+unloading …* and *Loading the model …, please wait* (progress announcements), Interrupt stops the
+message before the CLI starts (a load already asked of LM Studio goes on), and a failure ends the
+message with its reason (`ModelLoadError`). Since the CLI asks for `haiku` by itself for small tasks, a
+provider that loads its models has its three aliases on the model of the message: the server is never
+asked for another model, which LM Studio would load in place of this one.
 
 ## What stays Claude's
 

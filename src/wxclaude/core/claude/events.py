@@ -181,6 +181,15 @@ class Compacted:
 
 
 @dataclass(frozen=True, slots=True)
+class ModelLoading:
+    """WxClaude prepares the local server before sending the message (``model_loading``):
+    ``action`` is ``unload`` or ``load``, ``models`` the models it is about."""
+
+    action: str
+    models: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class GaugesRead:
     """The end of a reading of the gauges (``/usage``); ``windows`` is empty when it failed."""
 
@@ -202,4 +211,5 @@ RunEvent = (
     | Compacted
     | TurnEnded
     | GaugesRead
+    | ModelLoading
 )

@@ -8,6 +8,7 @@ from wxclaude.core.claude.events import (
     AssistantText,
     Compacted,
     McpServer,
+    ModelLoading,
     PermissionDenied,
     RunEvent,
     Thinking,
@@ -17,6 +18,7 @@ from wxclaude.core.claude.events import (
 )
 from wxclaude.core.claude.tool_target import tool_detail
 from wxclaude.core.config.agents import mode_from_cli
+from wxclaude.core.config.model_loading import UNLOADING
 from wxclaude.core.numbers import format_tokens
 from wxclaude.core.speech.announcements import Announce
 from wxclaude.i18n import _
@@ -44,6 +46,10 @@ def progress_for(event: RunEvent) -> Progress | None:
         return Progress(Announce.CLAUDE_ANSWERING)
     if isinstance(event, PermissionDenied) and event.reason_type != "hook":
         return Progress(Announce.PERMISSION_DENIED, {"tool": event.tool_name})
+    if isinstance(event, ModelLoading):
+        unloading = event.action == UNLOADING
+        announce = Announce.MODEL_UNLOADING if unloading else Announce.MODEL_LOADING
+        return Progress(announce, {"models": ", ".join(event.models)})
     return None
 
 

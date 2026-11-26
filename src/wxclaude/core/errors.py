@@ -45,6 +45,10 @@ class BalanceError(WxClaudeError):
     """The credit left with a provider cannot be asked; the message says why."""
 
 
+class ModelLoadError(WxClaudeError):
+    """The model of a message cannot be loaded on its local server; the message says why."""
+
+
 class SessionReadError(WxClaudeError):
     """A session file of the Claude Code CLI cannot be read."""
 

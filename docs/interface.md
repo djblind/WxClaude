@@ -450,16 +450,17 @@ Claude are then offered. A provider that was deleted shows as Claude. See `provi
   WxClaude, or none for a local server), a button *Add a key* / *Remove the key* (by whether the provider
   has one; greyed for a provider that needs none; the key is typed in a password field with a check box
   *Show the key*, kept encrypted when the form is accepted, never shown again; Cancel changes nothing),
-  a list box *Variable* (a classic list, one line selected, all six lines visible) and a field *Value*: the list holds one line per variable, written `Small model =
+  a list box *Variable* (a classic list, one line selected, all its lines visible) and a field *Value*: the list holds one line per variable, written `Small model =
   deepseek-v4-flash`: the four models (*Small*, *Medium*, *Large* and *Largest model*; an empty one takes
   the weakest model given, one is enough; the first three also stand for `haiku`, `sonnet` and `opus`),
   then the variables of the CLI the provider can set (`API_TIMEOUT_MS`, `CLAUDE_CODE_MAX_CONTEXT_TOKENS`,
-  `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `CLAUDE_CODE_MAX_OUTPUT_TOKENS`: a closed list, whole numbers; empty means not set: `providers.md`). The field *Value* holds the value of
+  `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` (1 to 100), `CLAUDE_CODE_MAX_OUTPUT_TOKENS`: a closed list, whole numbers; empty means not set: `providers.md`). The field *Value* holds the value of
   the selected line (its name says which: *Value of API_TIMEOUT_MS*) and a read-only field *Explanation*
   says what the line does. The line follows the value when the field is left, not at each key, so a screen
   reader does not read the list again at each one. The check box *Send the
-  effort*, then, at the bottom, two lists *Models retrieval* (*No method*, *V1*) and *Gauge retrieval*
-  (*No method*, *DeepSeek*), and right under them the button *Check the data retrieved* (greyed while a key
+  effort*, then, at the bottom, three lists *Models retrieval* (*No method*, *V1*), *Gauge retrieval*
+  (*No method*, *DeepSeek*) and *Model loading* (*No method*, *LM Studio*: WxClaude loads the model of
+  each message, `providers.md`, "Model loading"), and right under them the button *Check the data retrieved* (greyed while a key
   is needed and missing, or when both lists say *No method*): it asks the server with the two methods
   chosen and shows the models and the credit in a read-only text (`providers.md`, "The data of a
   server"). The same form serves to add and to change a provider. A form that is not valid is asked again with what

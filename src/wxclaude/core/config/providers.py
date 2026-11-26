@@ -12,8 +12,14 @@ from pathlib import Path
 
 from wxclaude.core.config.agents import DEFAULT_PROVIDER, MODELS
 from wxclaude.core.config.jsonstore import read_json, write_json
+from wxclaude.core.config.model_loading import NONE as NO_LOADING
 from wxclaude.core.config.provider_methods import DEFAULT_CREDIT_METHOD, DEFAULT_MODELS_METHOD
-from wxclaude.core.config.provider_variables import PROVIDER_VARIABLES, variables_problem
+from wxclaude.core.config.provider_variables import (
+    MAX_CONTEXT,
+    PROVIDER_VARIABLES,
+    is_valid_value,
+    variables_problem,
+)
 from wxclaude.core.errors import KeyVaultError, ProviderError
 from wxclaude.core.security.vault import KeyVault
 from wxclaude.i18n import _
@@ -61,6 +67,9 @@ class Provider:
     #: How a message reaches it: Claude Code started by WxClaude, or the Agent SDK
     #: (``docs/agent-sdk.md``), which needs a key of the Anthropic API.
     engine: str = ENGINE_CLI
+    #: How the model of a message is loaded on a local server before it is sent
+    #: (``model_loading``): none, or LM Studio.
+    loading_method: str = NO_LOADING
 
     def __post_init__(self) -> None:
         self.tiers = fill_tiers(self.tiers)
@@ -72,6 +81,18 @@ class Provider:
     def uses_sdk(self) -> bool:
         """Does a message to this provider go through the Agent SDK?"""
         return not self.is_builtin and self.engine == ENGINE_SDK
+
+    @property
+    def loads_models(self) -> bool:
+        """Does WxClaude load the model of a message on the server before sending it?"""
+        return not self.is_builtin and not self.uses_sdk and self.loading_method != NO_LOADING
+
+    @property
+    def context_length(self) -> int | None:
+        """The window of context the model is loaded with: the variable
+        ``CLAUDE_CODE_MAX_CONTEXT_TOKENS`` of the provider, if it sets it."""
+        value = self.env.get(MAX_CONTEXT, "")
+        return int(value) if is_valid_value(value) else None
 
     @property
     def models(self) -> list[str]:
@@ -129,6 +150,7 @@ class Provider:
             "credit_method": self.credit_method,
             "env": dict(self.env),
             "engine": self.engine,
+            "loading_method": self.loading_method,
         }
 
     @classmethod
@@ -155,6 +177,7 @@ class Provider:
             credit_method=_text(credit_method, DEFAULT_CREDIT_METHOD),
             env=_variables(data.get("env")),
             engine=_text(data.get("engine"), ENGINE_CLI),  # unknown: Claude Code (__post_init__)
+            loading_method=_text(data.get("loading_method"), NO_LOADING),
         )
 
 

@@ -164,7 +164,8 @@ In the preferences, the form of a provider lets you define:
 - a name and an address (URL);
 - an API key, or "none" for a local server;
 - the list of available models and configuration variables.
-- the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below).
+- the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below);
+- the loading of the models, for a local LM Studio server (see below).
 
 ### Using the API credits of the plan
 
@@ -184,6 +185,22 @@ The "Relayed" transmission does not apply to this engine: the key is then passed
 An API key cannot ask for the balance left. So WxClaude adds up the cost of each message sent by this engine itself, at list price.
 The gauge dialog tells, for each Agent SDK provider, what it spent this month, for example "API: 3.42 dollars spent this month from the API credits".
 The balance itself is on the console of Anthropic: platform.claude.com, Billing page.
+
+### Switching local models without restarting WxClaude
+
+A local server keeps its models in the memory of the computer, which rarely has room for two big models.
+With LM Studio, WxClaude can load the model of each message itself: in the form of the provider, choose "LM Studio" in the list "Model loading".
+
+Before each message, WxClaude then checks that the chosen model is loaded.
+If it is not, it looks whether there is enough memory left next to the models already loaded; if not, it unloads them, then it loads the right model.
+WxClaude says it: "Not enough memory: unloading…", then "Loading the model…, please wait".
+The first message after a change of model therefore waits for the loading, which can take a few minutes for a big model.
+
+- The names of the models of the provider are the names in LM Studio, for example `qwen3.5-122b-a10b-claudecode`.
+- The variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` of the provider gives the size of the context the model is loaded with, for example 131072.
+- If the server of LM Studio does not answer, WxClaude starts it.
+
+Then just open WxClaude normally: in the Agent dialog (Ctrl+Shift+A), you choose Claude on your plan, the Agent SDK on the API credits, or one of your local models.
 
 ### Protection of API keys
 

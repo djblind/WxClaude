@@ -206,6 +206,8 @@ class Announce(enum.Enum):
     CLAUDE_USING_TOOL_TO_RUN = (PROGRESS, N_("{name} uses the tool {tool} to run {target}."))
     CLAUDE_ANSWERING = (PROGRESS, N_("{name} is answering."))
     CLAUDE_INTERRUPTING = (PROGRESS, N_("Interrupting {name}."))
+    MODEL_UNLOADING = (PROGRESS, N_("Not enough memory: unloading {models}."))
+    MODEL_LOADING = (PROGRESS, N_("Loading the model {models}, please wait."))
     SERVER_RETRY = (
         PROGRESS,
         N_(
