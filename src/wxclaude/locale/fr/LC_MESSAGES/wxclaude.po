@@ -2097,3 +2097,69 @@ msgstr "LM Studio n'a pas pu décharger {model} (erreur {code}). {detail}"
 
 msgid "LM Studio could not load {model} (error {code}). {detail}"
 msgstr "LM Studio n'a pas pu charger {model} (erreur {code}). {detail}"
+
+msgid "Claude account (another account of a plan)"
+msgstr "Compte Claude (un autre compte d'un abonnement)"
+
+msgid "An account of Claude needs its sign-in, saved by WxClaude."
+msgstr "Un compte Claude a besoin de sa connexion, enregistrée par WxClaude."
+
+msgid "&Sign in to the account"
+msgstr "&Se connecter au compte"
+
+msgid "Forget the &sign-in"
+msgstr "&Supprimer la connexion"
+
+msgid "Sign in to the Claude account {name}"
+msgstr "Connexion au compte Claude {name}"
+
+msgid "C&ode"
+msgstr "C&ode"
+
+msgid "&Send the code"
+msgstr "&Envoyer le code"
+
+msgid "Open the page in the &browser"
+msgstr "Ouvrir la page dans le &navigateur"
+
+msgid "The browser could not be opened."
+msgstr "Le navigateur n'a pas pu être ouvert."
+
+msgid "Opening the sign-in page of Claude in the browser…"
+msgstr "Ouverture de la page de connexion de Claude dans le navigateur…"
+
+msgid "Paste the code that the page of Claude shows."
+msgstr "Collez le code affiché par la page de Claude."
+
+msgid "The code cannot be sent.\n{error}"
+msgstr "Le code ne peut pas être envoyé.\n{error}"
+
+msgid "Code sent. Waiting for Claude Code."
+msgstr "Code envoyé. Attente de Claude Code."
+
+msgid "In the browser, sign in with the account to add and allow it. Then copy the code that the page shows, paste it in the field Code and send it."
+msgstr "Dans le navigateur, connectez-vous avec le compte à ajouter et autorisez-le. Copiez ensuite le code affiché par la page, collez-le dans le champ Code et envoyez-le."
+
+msgid "The sign-in failed."
+msgstr "La connexion a échoué."
+
+msgid "new"
+msgstr "nouveau"
+
+msgid "llama.cpp server (command)"
+msgstr "Serveur llama.cpp (commande)"
+
+msgid "Server co&mmand (llama.cpp server)"
+msgstr "Co&mmande du serveur (serveur llama.cpp)"
+
+msgid "The server at {address} does not answer, and the provider has no command to start it."
+msgstr "Le serveur à l'adresse {address} ne répond pas, et le fournisseur n'a pas de commande pour le démarrer."
+
+msgid "The server cannot be started: {reason}"
+msgstr "Le serveur ne peut pas démarrer : {reason}"
+
+msgid "The server stopped at once (exit code {code}). Check its command."
+msgstr "Le serveur s'est arrêté aussitôt (code de sortie {code}). Vérifiez sa commande."
+
+msgid "The server did not answer in time: it was stopped."
+msgstr "Le serveur n'a pas répondu à temps : il a été arrêté."

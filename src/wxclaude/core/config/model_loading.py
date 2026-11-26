@@ -7,8 +7,9 @@ the message is not loaded, the method looks whether there is room for it next to
 are; if not, it unloads them first; then it loads it. This replaces the scripts that had to be run
 before starting WxClaude, one per model.
 
-The only method for now is LM Studio, through its own API (``/api/v1/models``, ``load``,
-``unload``). The memory a model needs is the estimate of its command ``lms`` (``load
+LM Studio is loaded through its own API (``/api/v1/models``, ``load``, ``unload``); a llama.cpp
+server, which serves one model, is started with the command of the provider (``local_servers``).
+For LM Studio, The memory a model needs is the estimate of its command ``lms`` (``load
 --estimate-only``); the memory free is the memory of the computer that Windows says is available
 plus the free memory of the NVIDIA cards (``nvidia-smi``). When either cannot be known, the other
 models are unloaded: that is what the scripts always did. Everything here runs away from the window
@@ -21,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
@@ -30,17 +32,23 @@ from http.client import HTTPException
 from pathlib import Path
 from typing import ClassVar
 
+from wxclaude.core.config import local_servers
 from wxclaude.core.config.provider_methods import Opener, default_open, origin_of
 from wxclaude.core.errors import ModelLoadError
 from wxclaude.i18n import N_, _
 
 NONE = "none"  # the identifier of "no method"
 LMSTUDIO = "lmstudio"
+LLAMA_SERVER = "llama_server"
+LM_STUDIO_ADDRESS = (
+    "http://localhost:1234"  # where a llama.cpp server looks for LM Studio to unload
+)
 UNLOADING = "unload"  # the steps told while a model is prepared
 LOADING = "load"
 LIST_TIMEOUT_SECONDS = 15.0
 LOAD_TIMEOUT_SECONDS = 900.0  # a big model read from the disk takes minutes
 _COMMAND_TIMEOUT_SECONDS = 120.0
+_POLL_SECONDS = 1.0
 _MAX_ANSWER_BYTES = 2_000_000
 _MAX_DETAIL = 200
 _NOT_FOUND = 404
@@ -70,11 +78,17 @@ class LoadingMethod(ABC):
 
     @abstractmethod
     def prepare(
-        self, base_url: str, model: str, context_length: int | None, report: Report
+        self,
+        base_url: str,
+        model: str,
+        context_length: int | None,
+        report: Report,
+        command: str = "",
     ) -> None:
         """Make sure ``model`` is loaded on the server at ``base_url`` (with ``context_length``
-        tokens of context when it is given), unloading what must be. Raises ``ModelLoadError``
-        with a message for the user."""
+        tokens of context when it is given), unloading what must be; ``command`` starts the
+        server, for the methods that start one. Raises ``ModelLoadError`` with a message for the
+        user."""
 
 
 class NoLoading(LoadingMethod):
@@ -85,7 +99,12 @@ class NoLoading(LoadingMethod):
     active = False
 
     def prepare(
-        self, base_url: str, model: str, context_length: int | None, report: Report
+        self,
+        base_url: str,
+        model: str,
+        context_length: int | None,
+        report: Report,
+        command: str = "",
     ) -> None:
         return
 
@@ -251,8 +270,14 @@ class LmStudioLoading(LoadingMethod):
         self._start_server = start_server
 
     def prepare(
-        self, base_url: str, model: str, context_length: int | None, report: Report
+        self,
+        base_url: str,
+        model: str,
+        context_length: int | None,
+        report: Report,
+        command: str = "",
     ) -> None:
+        local_servers.stop_servers(lambda names: report(UNLOADING, names))  # they hold the card
         origin = origin_of(base_url)
         loaded = self.loaded(origin)
         same = [entry for entry in loaded if model in (entry.key, entry.instance_id)]
@@ -260,11 +285,11 @@ class LmStudioLoading(LoadingMethod):
             return  # already there, as it is wanted
         if same:  # loaded with another context: loaded again
             report(UNLOADING, [entry.key for entry in same])
-            self._unload_all(origin, same)
+            self.unload_all(origin, same)
         others = [entry for entry in loaded if entry not in same]
         if others and not self._fits(model, context_length):
             report(UNLOADING, [entry.key for entry in others])
-            self._unload_all(origin, others)
+            self.unload_all(origin, others)
         report(LOADING, [model])
         body: dict[str, object] = {"model": model, "parallel": 1}
         if context_length:
@@ -293,7 +318,8 @@ class LmStudioLoading(LoadingMethod):
         free = self._memory()
         return needed is not None and free is not None and needed <= free
 
-    def _unload_all(self, origin: str, models: list[LoadedModel]) -> None:
+    def unload_all(self, origin: str, models: list[LoadedModel]) -> None:
+        """Unload ``models`` from LM Studio at ``origin``; raises ``ModelLoadError``."""
         for entry in models:
             body: dict[str, object] = {"instance_id": entry.instance_id}
             self._call(origin, "/api/v1/models/unload", body, LIST_TIMEOUT_SECONDS, entry.key)
@@ -351,10 +377,104 @@ class LmStudioLoading(LoadingMethod):
         )
 
 
+class LlamaServerLoading(LoadingMethod):
+    """A llama.cpp server (``llama-server``) that serves one model, started by WxClaude with the
+    command of the provider when it does not answer (``GET /health``). The models of LM Studio are
+    unloaded first and the other servers WxClaude started are stopped, to free the graphics card;
+    then WxClaude waits until the server answers. The model of the message is the one of the
+    command (its ``--alias`` is the name the provider sends).
+    """
+
+    id = LLAMA_SERVER
+    label = N_("llama.cpp server (command)")
+
+    def __init__(
+        self,
+        opener: Opener = default_open,
+        lm_studio: LmStudioLoading | None = None,
+        start: Callable[[str], subprocess.Popen[bytes]] = local_servers.start_command,
+        sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._open = opener
+        self._lm_studio = lm_studio or LmStudioLoading(opener, start_server=lambda: False)
+        self._start = start
+        self._sleep = sleep
+        self._clock = clock
+
+    def prepare(
+        self,
+        base_url: str,
+        model: str,
+        context_length: int | None,
+        report: Report,
+        command: str = "",
+    ) -> None:
+        origin = origin_of(base_url)
+        if self._answers(origin):
+            return
+        if not command.strip():
+            raise ModelLoadError(
+                _(
+                    "The server at {address} does not answer, and the provider has no command "
+                    "to start it."
+                ).format(address=origin)
+            )
+        self._free_the_card(report)
+        report(LOADING, [model])
+        try:
+            process = self._start(command)
+        except OSError as error:
+            raise ModelLoadError(
+                _("The server cannot be started: {reason}").format(reason=error)
+            ) from error
+        local_servers.remember(process, model)
+        self._wait(origin, process)
+
+    # -- inside ---------------------------------------------------------------------------
+
+    def _free_the_card(self, report: Report) -> None:
+        """Unload LM Studio (if it answers) and stop the servers WxClaude started."""
+        try:
+            loaded = self._lm_studio.loaded(LM_STUDIO_ADDRESS)
+        except ModelLoadError:
+            loaded = []  # LM Studio is not running: nothing to unload
+        if loaded:
+            report(UNLOADING, [entry.key for entry in loaded])
+            self._lm_studio.unload_all(LM_STUDIO_ADDRESS, loaded)
+        local_servers.stop_servers(lambda names: report(UNLOADING, names))
+
+    def _wait(self, origin: str, process: subprocess.Popen[bytes]) -> None:
+        """Wait until the server answers; it stopping, or never answering, is an error."""
+        deadline = self._clock() + LOAD_TIMEOUT_SECONDS
+        while self._clock() < deadline:
+            if self._answers(origin):
+                return
+            code = process.poll()
+            if code is not None:
+                raise ModelLoadError(
+                    _("The server stopped at once (exit code {code}). Check its command.").format(
+                        code=code
+                    )
+                )
+            self._sleep(_POLL_SECONDS)
+        local_servers.stop_servers()
+        raise ModelLoadError(_("The server did not answer in time: it was stopped."))
+
+    def _answers(self, origin: str) -> bool:
+        request = urllib.request.Request(origin + "/health", method="GET")
+        try:
+            with self._open(request, LIST_TIMEOUT_SECONDS) as response:
+                response.read(_MAX_ANSWER_BYTES)
+        except urllib.error.URLError, HTTPException, OSError, ValueError:
+            return False
+        return True
+
+
 # -- the registry ---------------------------------------------------------------------------------
 
 #: The methods, in the order of the list of the form. A method is added here.
-LOADING_METHODS: tuple[LoadingMethod, ...] = (NoLoading(), LmStudioLoading())
+LOADING_METHODS: tuple[LoadingMethod, ...] = (NoLoading(), LmStudioLoading(), LlamaServerLoading())
 
 
 def loading_method(identifier: str) -> LoadingMethod:

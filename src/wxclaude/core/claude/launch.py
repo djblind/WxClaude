@@ -20,6 +20,9 @@ from wxclaude.core.security.key_relay import KeyRelay, RelayAccess
 KEY_VARIABLE = "ANTHROPIC_AUTH_TOKEN"
 # A key of the Anthropic API itself (the Agent SDK): sent as ``x-api-key``, which the API wants.
 API_KEY_VARIABLE = "ANTHROPIC_API_KEY"
+# The long-lived token of another account of a Claude plan (``claude setup-token``): it goes before
+# the sign-in saved by Claude Code, and the conversations stay in the same folder.
+ACCOUNT_TOKEN_VARIABLE = "CLAUDE_CODE_OAUTH_TOKEN"
 SCRUB_VARIABLE = "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB"
 NO_KEY = "no-key"  # given to the CLI by a provider that needs none (a local server)
 # What the CLI sends to Anthropic when the user chose another provider.
@@ -63,7 +66,9 @@ def provider_settings(launch: ProviderLaunch | None, model: str = "") -> dict[st
         return {}
     provider = launch.provider
     relay = launch.relay
-    env = {"ANTHROPIC_BASE_URL": relay.base_url if relay else provider.base_url}
+    env: dict[str, str] = {}
+    if not provider.is_account:  # an account of Claude goes to Claude, as the CLI knows it
+        env["ANTHROPIC_BASE_URL"] = relay.base_url if relay else provider.base_url
     aliases = provider.aliases
     if provider.loads_models and model:
         aliases = dict.fromkeys(ALIASES, model)
@@ -96,11 +101,19 @@ def provider_environment(
         key = NO_KEY
     else:
         key = launch.relay.token if launch.relay else launch.key
-    environment[API_KEY_VARIABLE if launch.provider.uses_sdk else KEY_VARIABLE] = key
-    environment.update(TELEMETRY_OFF)
+    environment[_key_variable(launch.provider)] = key
+    if not launch.provider.is_account:  # an account of Claude is Claude: nothing more is off
+        environment.update(TELEMETRY_OFF)
     if launch.scrub:
         environment[SCRUB_VARIABLE] = "1"
     return environment
+
+
+def _key_variable(provider: Provider) -> str:
+    """The variable that gives the key of ``provider`` to the CLI."""
+    if provider.is_account:
+        return ACCOUNT_TOKEN_VARIABLE
+    return API_KEY_VARIABLE if provider.uses_sdk else KEY_VARIABLE
 
 
 def blanked_variables(
@@ -146,10 +159,14 @@ def launch_for(
         return None
     key = providers.key(provider.id) if provider.needs_key else ""
     # The relay gives the key as a bearer token, which the API of Anthropic (the Agent SDK) does
-    # not take: such a provider goes the masked way.
-    relayable = provider.needs_key and not provider.uses_sdk
+    # not take, and an account of Claude has no address to relay: such a provider goes the masked
+    # way.
+    relayable = provider.needs_key and not provider.uses_sdk and not provider.is_account
     if transmission == RELAYED and relay is not None and relayable:
         return ProviderLaunch(provider, "", False, relay.access(provider, key))
     # Without a relay the safe way is taken. A provider that needs no key has no secret to hide.
-    scrub = transmission in (MASKED, RELAYED) and provider.needs_key
+    # Nor is the token of an account of Claude hidden: hiding it makes the CLI force the manual
+    # mode, and it would protect little, since the sign-in of the main account is in a file
+    # (``.credentials.json``) that the tools of Claude can read as well.
+    scrub = transmission in (MASKED, RELAYED) and provider.needs_key and not provider.is_account
     return ProviderLaunch(provider, key, scrub)

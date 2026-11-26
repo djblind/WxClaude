@@ -19,7 +19,7 @@ from wxclaude.core.config.provider_methods import (
     credit_method,
     models_method,
 )
-from wxclaude.core.config.providers import KEY_STORED, Provider, ProviderStore
+from wxclaude.core.config.providers import ENGINE_ACCOUNT, KEY_STORED, Provider, ProviderStore
 from wxclaude.core.errors import KeyVaultError, ModelListError, ProviderError
 from wxclaude.i18n import _
 
@@ -58,6 +58,11 @@ class ProviderFormView(Protocol):
         """Ask for the key of the provider ``name`` in a password field. None: cancelled."""
         ...
 
+    def sign_in_account(self, name: str) -> str | None:
+        """Sign in to the account of Claude ``name`` (``claude setup-token``) and give its token.
+        None: cancelled or failed (already said)."""
+        ...
+
     def show_data(self, name: str, lines: list[str]) -> None:
         """Show what the server of the provider ``name`` gave, in a read-only text."""
         ...
@@ -84,6 +89,13 @@ class ProviderFormPresenter:
         self._needs_key = edit.provider.key_source == KEY_STORED
         self._models = models_method(edit.provider.models_method)
         self._credit = credit_method(edit.provider.credit_method)
+        self._account = edit.provider.engine == ENGINE_ACCOUNT
+        self._refresh()
+
+    def engine_changed(self, engine: str) -> None:
+        """The user chose the engine: an account of Claude gets its key by signing in, and has no
+        server data to check."""
+        self._account = engine == ENGINE_ACCOUNT
         self._refresh()
 
     def key_source_changed(self, key_source: str) -> None:
@@ -104,7 +116,8 @@ class ProviderFormPresenter:
             edit.key = ""
             edit.remove_key = edit.had_key
         else:
-            secret = self._view.ask_key(name)
+            ask = self._view.sign_in_account if self._account else self._view.ask_key
+            secret = ask(name)
             if secret is None:
                 return
             if not secret.strip():
@@ -145,9 +158,12 @@ class ProviderFormPresenter:
 
     def _refresh(self) -> None:
         has_key = self.edit.has_key
-        label = _("Remove the ke&y") if has_key else _("Add a ke&y")
+        if self._account:
+            label = _("Forget the &sign-in") if has_key else _("&Sign in to the account")
+        else:
+            label = _("Remove the ke&y") if has_key else _("Add a ke&y")
         self._view.set_key_button(label, self._needs_key)
-        something_to_ask = self._models.available or self._credit.available
+        something_to_ask = not self._account and (self._models.available or self._credit.available)
         self._view.set_check_button(something_to_ask and (not self._needs_key or has_key))
 
 

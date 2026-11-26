@@ -239,6 +239,11 @@ def test_the_loading_of_the_models_is_chosen_in_the_form(
         assert dialog.result.provider.loading_method == "lmstudio"
         dialog._loading_method.SetSelection(0)
         assert dialog.result.provider.loading_method == "none"
+        dialog._loading_method.SetSelection(2)
+        dialog._server_command.SetValue("  llama-server.exe -m x.gguf  ")
+        assert dialog.result.provider.loading_method == "llama_server"
+        assert dialog.result.provider.server_command == "llama-server.exe -m x.gguf"
+        assert dialog._server_command.GetName() == "Server command (llama.cpp server)"
     finally:
         dialog.Destroy()
 

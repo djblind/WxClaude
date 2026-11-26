@@ -37,6 +37,10 @@ class FakeForm:
         self.asked.append(name)
         return self.typed
 
+    def sign_in_account(self, name: str) -> str | None:
+        self.asked.append("account " + name)
+        return self.typed
+
     def show_data(self, name: str, lines: list[str]) -> None:
         self.shown.append((name, lines))
 
@@ -284,3 +288,28 @@ def test_checking_without_a_key_is_told_before_any_request(monkeypatch: pytest.M
     assert form.errors == ["No key is saved for DeepSeek."]
     assert form.checks == 0
     assert models == []
+
+
+def test_an_account_of_claude_signs_in_instead_of_typing_a_key() -> None:
+    presenter, form = make()
+    presenter.engine_changed("claude_account")
+    assert form.key_button == ("&Sign in to the account", True)
+    assert not form.check_button  # no server data to check
+    form.typed = "sk-ant-oat01-token"
+    presenter.toggle_key("Compte 2")
+    assert form.asked == ["account Compte 2"]
+    assert presenter.edit.key == "sk-ant-oat01-token"
+    assert form.key_button == ("Forget the &sign-in", True)
+    presenter.toggle_key("Compte 2")
+    assert presenter.edit.key == ""
+    presenter.engine_changed("cli")
+    assert form.key_button == ("Add a ke&y", True)
+
+
+def test_a_cancelled_sign_in_keeps_no_key() -> None:
+    presenter, form = make()
+    presenter.engine_changed("claude_account")
+    form.typed = None
+    presenter.toggle_key("Compte 2")
+    assert presenter.edit.key == ""
+    assert form.errors == []

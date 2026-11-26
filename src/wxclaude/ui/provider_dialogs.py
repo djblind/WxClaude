@@ -4,6 +4,7 @@ from collections.abc import Callable, Sequence
 
 import wx
 
+from wxclaude.core.claude.account_token import AccountSignIn
 from wxclaude.core.config.model_loading import LOADING_METHODS, LoadingMethod
 from wxclaude.core.config.provider_methods import (
     CREDIT_METHODS,
@@ -12,6 +13,7 @@ from wxclaude.core.config.provider_methods import (
     ModelsMethod,
 )
 from wxclaude.core.config.providers import (
+    ENGINE_ACCOUNT,
     ENGINE_CLI,
     ENGINE_SDK,
     ENGINES,
@@ -26,6 +28,7 @@ from wxclaude.core.labels import accessible_name
 from wxclaude.i18n import N_, _
 from wxclaude.presenters.provider_form_presenter import ProviderEdit, ProviderFormPresenter
 from wxclaude.presenters.provider_variables_editor import ProviderVariablesEditor
+from wxclaude.ui.account_sign_in_dialog import AccountSignInDialog
 from wxclaude.ui.fields import read_only_field
 from wxclaude.ui.text_dialog import TextDialog
 from wxclaude.ui.worker import run_in_background
@@ -37,6 +40,7 @@ _KEY_SOURCE_LABELS = {
 _ENGINE_LABELS = {
     ENGINE_CLI: N_("Claude Code"),
     ENGINE_SDK: N_("Agent SDK (API credits of the plan)"),
+    ENGINE_ACCOUNT: N_("Claude account (another account of a plan)"),
 }
 
 
@@ -100,12 +104,20 @@ class ProviderDialog(wx.Dialog):
         self._loading_method = self._choice(
             sizer, _("Model &loading"), LOADING_METHODS, provider.loading_method
         )
+        # Used by the method "llama.cpp server" only: the command line that starts the server.
+        self._server_command = self._text(
+            sizer, _("Server co&mmand (llama.cpp server)"), provider.server_command
+        )
         self._check_button = wx.Button(self, label=_("&Check the data retrieved"))
         sizer.Add(self._check_button, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
         sizer.Add(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL), 0, wx.EXPAND | wx.ALL, 8)
         self.SetSizerAndFit(sizer)
         self.SetMinSize(wx.Size(520, -1))
         self.presenter = ProviderFormPresenter(self, store, edit)
+        self._engine.Bind(
+            wx.EVT_CHOICE,
+            lambda _event: self.presenter.engine_changed(ENGINES[self._engine.GetSelection()]),
+        )
         self._key_source.Bind(
             wx.EVT_CHOICE,
             lambda _event: self.presenter.key_source_changed(
@@ -234,6 +246,7 @@ class ProviderDialog(wx.Dialog):
                 env=self._variables.env,
                 engine=ENGINES[self._engine.GetSelection()],
                 loading_method=LOADING_METHODS[self._loading_method.GetSelection()].id,
+                server_command=str(self._server_command.GetValue()).strip(),
             ),
             had_key=kept.had_key,
             key=kept.key if key_source == KEY_STORED else "",
@@ -248,6 +261,10 @@ class ProviderDialog(wx.Dialog):
 
     def set_check_button(self, enabled: bool) -> None:
         self._check_button.Enable(enabled)
+
+    def sign_in_account(self, name: str) -> str | None:
+        with AccountSignInDialog(self, name or _("new"), AccountSignIn()) as dialog:
+            return dialog.token if dialog.ShowModal() == wx.ID_OK else None
 
     def ask_key(self, name: str) -> str | None:
         with KeyDialog(self, name) as dialog:

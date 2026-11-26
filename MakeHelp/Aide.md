@@ -37,7 +37,7 @@ les questions de permission sur les outils. WxClaude démarre pour cela un serve
 
 Avec le hook HTTP, une question sans réponse dans le délai d'attente est refusée par Claude Code. Réglez ce délai (1 à 10 minutes) sur la même page.
 
-Dans le mode de permission *Ne pas demander*, rien n'est demandé, quel que soit le type.
+Dans le mode de permission *Ne pas demander*, rien n'est demandé, quel que soit le type : tout ce qui n'est pas autorisé à l'avance par une règle est refusé. Pour que Claude agisse sans vous demander, choisissez plutôt le mode *Automatique*, qui ne bloque que les actions dangereuses.
 
 ## Fonctionnement
 
@@ -165,8 +165,25 @@ Dans les préférences, le formulaire d'un fournisseur permet de définir :
 - un nom et une adresse (URL) ;
 - une clé API, ou « aucune » pour un serveur local ;
 - la liste des modèles disponibles et des variables de configuration.
-- le moteur : Claude Code, ou l'Agent SDK pour les crédits API de l'abonnement (voir plus bas) ;
+- le moteur : Claude Code, l'Agent SDK pour les crédits API de l'abonnement, ou un autre compte Claude (voir plus bas) ;
 - le chargement des modèles, pour un serveur local LM Studio (voir plus bas).
+
+### Plusieurs comptes Claude
+
+Si vous avez plusieurs comptes Claude (par exemple un compte personnel et un compte d'équipe), WxClaude peut les utiliser tous, sans vous déconnecter : quand le quota d'un compte est atteint, vous continuez la même conversation avec un autre.
+
+1. Dans les préférences, page Fournisseurs, ajoutez un fournisseur et choisissez le moteur « Compte Claude (un autre compte d'un abonnement) ». L'adresse et les modèles ne servent pas : ce sont ceux de Claude.
+2. Activez le bouton « Se connecter au compte ». WxClaude ouvre la page de connexion de Claude dans votre navigateur.
+3. Dans le navigateur, connectez-vous avec le compte à ajouter et autorisez-le. Si le navigateur est déjà connecté à un autre compte, changez de compte sur claude.ai ou copiez l'adresse dans une fenêtre de navigation privée.
+4. La page affiche un code : copiez-le, collez-le dans le champ Code de WxClaude et envoyez-le.
+5. Validez le formulaire avec OK.
+
+Le compte apparaît alors dans la boîte de dialogue Agent (Ctrl+Maj+A), avec les modèles et les efforts de Claude.
+Les conversations et l'historique restent les mêmes pour tous les comptes.
+
+La connexion d'un compte dure un an ; ensuite, supprimez-la et reconnectez-vous avec le même bouton.
+Elle est chiffrée avec votre compte Windows, comme les clés des autres fournisseurs. Elle n'est pas masquée aux commandes de Claude, pour que tous les modes de permission marchent, y compris Automatique.
+Les jauges d'utilisation (Ctrl+Maj+U) restent celles du compte principal, celui de « Se connecter à Claude ».
 
 ### Utiliser les crédits API de l'abonnement
 
@@ -201,6 +218,16 @@ Le premier message après un changement de modèle attend donc le chargement, qu
 - La variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` du fournisseur donne la taille du contexte avec laquelle le modèle est chargé, par exemple 131072.
 - Si le serveur de LM Studio ne répond pas, WxClaude le démarre.
 
+#### Un modèle servi par llama.cpp
+
+Certains modèles ne s'ouvrent pas encore dans LM Studio et tournent avec le serveur de llama.cpp (`llama-server`).
+WxClaude peut aussi le démarrer lui-même : dans le formulaire du fournisseur, choisissez « Serveur llama.cpp (commande) » dans la liste « Chargement des modèles », et collez dans le champ « Commande du serveur » la ligne de commande complète du serveur (avec `--port` et `--alias`).
+
+- L'adresse du fournisseur est celle du serveur, par exemple `http://127.0.0.1:8080`, et le nom du modèle est celui donné par `--alias`.
+- Avant un message, si le serveur ne répond pas, WxClaude décharge les modèles de LM Studio pour libérer la carte graphique, démarre le serveur et attend qu'il soit prêt.
+- Avant de charger un modèle de LM Studio, WxClaude arrête le serveur qu'il a démarré. Il l'arrête aussi quand vous quittez WxClaude.
+- WxClaude n'arrête jamais un serveur que vous avez démarré vous-même.
+
 Il suffit alors d'ouvrir WxClaude normalement : dans la boîte de dialogue Agent (Ctrl+Maj+A), vous choisissez Claude sur votre abonnement, l'Agent SDK sur les crédits API, ou l'un de vos modèles locaux.
 
 ### Protection des clés API
@@ -208,7 +235,7 @@ Il suffit alors d'ouvrir WxClaude normalement : dans la boîte de dialogue Agent
 Les clés d'autorisation des fournisseurs sont chiffrées avec votre compte Windows.
 Plusieurs méthodes de transmission des clés à Claude Code sont possibles :
 
-- Masquée (par défaut) : les commandes que Claude exécute ne voient pas la clé, mais la CLI impose alors le mode de permission manuel. Les modes Plan, Accepter les modifications, Auto et Ne pas demander ne s'appliquent pas.
+- Masquée (par défaut) : les commandes que Claude exécute ne voient pas la clé, mais la CLI impose alors le mode de permission manuel. Les modes Plan, Accepter les modifications, Auto et Ne pas demander ne s'appliquent pas. Cela ne concerne pas un compte Claude : sa connexion n'est jamais masquée, pour que tous les modes marchent (celle du compte principal est de toute façon dans un fichier que les commandes peuvent lire).
 - Partagée : tous les modes marchent, mais les commandes de Claude peuvent lire la clé, et une consigne cachée dans un fichier ou une page web pourrait la leur faire révéler.
 - Relayée : la clé reste seulement dans WxClaude, derrière un petit relais sur votre ordinateur (`127.0.0.1`). Tous les modes marchent, au prix d'un mécanisme de fonctionnement plus complexe.
 

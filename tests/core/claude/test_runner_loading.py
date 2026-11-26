@@ -52,15 +52,22 @@ class FakeLoading(LoadingMethod):
 
     def __init__(self, failure: str = "") -> None:
         self.asked: list[tuple[str, str, int | None]] = []
+        self.commands: list[str] = []
         self.failure = failure
         self.release = threading.Event()
         self.release.set()
         self.started = threading.Event()
 
     def prepare(
-        self, base_url: str, model: str, context_length: int | None, report: Report
+        self,
+        base_url: str,
+        model: str,
+        context_length: int | None,
+        report: Report,
+        command: str = "",
     ) -> None:
         self.asked.append((base_url, model, context_length))
+        self.commands.append(command)
         report(LOADING, [model])
         self.started.set()
         self.release.wait(30)

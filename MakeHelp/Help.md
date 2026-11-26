@@ -37,7 +37,7 @@ the permission questions about tools. For this, WxClaude starts a local HTTP ser
 
 With the HTTP hook, a question that is not answered within the waiting time is refused by Claude Code. Set this time (1 to 10 minutes) on the same page.
 
-In the permission mode *Do not ask*, nothing is asked, whatever the type.
+In the permission mode *Do not ask*, nothing is asked, whatever the type: anything that a rule does not allow beforehand is refused. For Claude to act without asking you, choose the mode *Automatic* instead, which blocks only the dangerous actions.
 
 ## How it works
 
@@ -168,8 +168,25 @@ In the preferences, the form of a provider lets you define:
 - a name and an address (URL);
 - an API key, or "none" for a local server;
 - the list of available models and configuration variables.
-- the engine: Claude Code, or the Agent SDK for the API credits of the plan (see below);
+- the engine: Claude Code, the Agent SDK for the API credits of the plan, or another Claude account (see below);
 - the loading of the models, for a local LM Studio server (see below).
+
+### Several Claude accounts
+
+If you have several Claude accounts (for example a personal account and a team account), WxClaude can use them all without signing out: when the quota of one account is reached, you go on with the same conversation on another.
+
+1. In the preferences, page Providers, add a provider and choose the engine "Claude account (another account of a plan)". The address and the models are not used: they are those of Claude.
+2. Press the button "Sign in to the account". WxClaude opens the sign-in page of Claude in your browser.
+3. In the browser, sign in with the account to add and allow it. If the browser is already signed in to another account, switch accounts on claude.ai or copy the address into a private window.
+4. The page shows a code: copy it, paste it in the field Code of WxClaude and send it.
+5. Accept the form with OK.
+
+The account then appears in the Agent dialog (Ctrl+Shift+A), with the models and the efforts of Claude.
+The conversations and their history stay the same for all accounts.
+
+The sign-in of an account lasts a year; then remove it and sign in again with the same button.
+It is encrypted with your Windows account, like the keys of the other providers. It is not hidden from the commands of Claude, so that every permission mode works, Automatic included.
+The usage gauges (Ctrl+Shift+U) stay those of the main account, the one of "Sign in to Claude".
 
 ### Using the API credits of the plan
 
@@ -204,6 +221,16 @@ The first message after a change of model therefore waits for the loading, which
 - The variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` of the provider gives the size of the context the model is loaded with, for example 131072.
 - If the server of LM Studio does not answer, WxClaude starts it.
 
+#### A model served by llama.cpp
+
+Some models do not open in LM Studio yet and run with the server of llama.cpp (`llama-server`).
+WxClaude can start it too: in the form of the provider, choose "llama.cpp server (command)" in the list "Model loading", and paste in the field "Server command" the whole command line of the server (with `--port` and `--alias`).
+
+- The address of the provider is the one of the server, for example `http://127.0.0.1:8080`, and the name of the model is the one given by `--alias`.
+- Before a message, if the server does not answer, WxClaude unloads the models of LM Studio to free the graphics card, starts the server and waits until it is ready.
+- Before loading a model of LM Studio, WxClaude stops the server it started. It also stops it when you quit WxClaude.
+- WxClaude never stops a server you started yourself.
+
 Then just open WxClaude normally: in the Agent dialog (Ctrl+Shift+A), you choose Claude on your plan, the Agent SDK on the API credits, or one of your local models.
 
 ### Protection of API keys
@@ -211,7 +238,7 @@ Then just open WxClaude normally: in the Agent dialog (Ctrl+Shift+A), you choose
 The authorization keys of the providers are encrypted with your Windows account.
 Several methods of passing the keys to Claude Code are possible:
 
-- Masked (default): the commands that Claude runs do not see the key, but the CLI then forces the manual permission mode. The Plan, Accept edits, Auto and Do not ask modes do not apply.
+- Masked (default): the commands that Claude runs do not see the key, but the CLI then forces the manual permission mode. The Plan, Accept edits, Auto and Do not ask modes do not apply. This does not concern a Claude account: its sign-in is never masked, so that every mode works (the one of the main account is anyway in a file that the commands can read).
 - Shared: all modes work, but the commands of Claude can read the key, and an instruction hidden in a file or a web page could make Claude reveal it.
 - Relayed: the key stays only in WxClaude, behind a small relay on your computer (`127.0.0.1`). All modes work, at the price of a more complex mechanism.
 

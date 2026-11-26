@@ -1,6 +1,8 @@
 # PyInstaller recipe: one folder (onedir), no console. Build with build.bat from the repo root.
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+
 root = Path(SPECPATH).parent
 package = root / "src" / "wxclaude"
 
@@ -15,14 +17,19 @@ datas = (
     + data("data/*.txt", "data")
     + data("help/*.html", "help")
     + data("sounds/*.wav", "sounds")
+    # The pseudo-console of the sign-in to another account (core/claude/account_token.py): its
+    # helpers OpenConsole.exe and winpty-agent.exe sit next to the module.
+    + collect_data_files("winpty", excludes=["tests/**"])
 )
 
 analysis = Analysis(
     [str(package / "__main__.py")],
     pathex=[str(root / "src")],
     datas=datas,
-    # The Agent SDK is imported only when a message goes through it (core/claude/sdk_run.py).
-    hiddenimports=["claude_agent_sdk", "wxclaude.core.claude.sdk_messages"],
+    binaries=collect_dynamic_libs("winpty"),
+    # The Agent SDK is imported only when a message goes through it (core/claude/sdk_run.py), and
+    # the pseudo-console only for a sign-in (core/claude/account_token.py).
+    hiddenimports=["claude_agent_sdk", "wxclaude.core.claude.sdk_messages", "winpty"],
     excludes=["tkinter", "pytest", "mypy", "ruff"],
 )
 # The SDK carries its own claude program (about 400 MB); WxClaude gives it the user's one instead.

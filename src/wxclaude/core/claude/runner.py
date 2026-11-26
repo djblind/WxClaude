@@ -257,6 +257,7 @@ class ClaudeRunner:
                 request.agent.model or "",
                 provider.context_length,
                 lambda action, models: on_event(ModelLoading(action, tuple(models))),
+                command=provider.server_command,
             )
         except ModelLoadError as error:
             failure = str(error)

@@ -30,7 +30,10 @@ KEY_NONE = "none"  # a local server that needs no key: a placeholder is given to
 KEY_SOURCES = (KEY_STORED, KEY_NONE)
 ENGINE_CLI = "cli"  # WxClaude starts Claude Code itself (``claude -p``)
 ENGINE_SDK = "agent_sdk"  # through the Claude Agent SDK: the API credits of a plan pay for it
-ENGINES = (ENGINE_CLI, ENGINE_SDK)
+#: Claude Code with another account of a Claude plan: its key is the long-lived token of
+#: ``claude setup-token`` (``core/claude/account_token.py``), given as ``CLAUDE_CODE_OAUTH_TOKEN``.
+ENGINE_ACCOUNT = "claude_account"
+ENGINES = (ENGINE_CLI, ENGINE_SDK, ENGINE_ACCOUNT)
 ALIASES = ("haiku", "sonnet", "opus")  # the models the CLI lets a provider answer to
 TIER_COUNT = len(MODELS)  # small, medium, large, largest: the same ranks as the models of Claude
 NAME_MAX = 15  # characters in the name of a provider
@@ -70,6 +73,9 @@ class Provider:
     #: How the model of a message is loaded on a local server before it is sent
     #: (``model_loading``): none, or LM Studio.
     loading_method: str = NO_LOADING
+    #: The command that starts the server of a provider whose loading method starts one
+    #: (llama.cpp server): run when the server does not answer.
+    server_command: str = ""
 
     def __post_init__(self) -> None:
         self.tiers = fill_tiers(self.tiers)
@@ -83,9 +89,17 @@ class Provider:
         return not self.is_builtin and self.engine == ENGINE_SDK
 
     @property
+    def is_account(self) -> bool:
+        """Is this another account of a Claude plan? It is Claude, with its own sign-in: the
+        models and the efforts of Claude, no address, no aliases."""
+        return not self.is_builtin and self.engine == ENGINE_ACCOUNT
+
+    @property
     def loads_models(self) -> bool:
         """Does WxClaude load the model of a message on the server before sending it?"""
-        return not self.is_builtin and not self.uses_sdk and self.loading_method != NO_LOADING
+        return (
+            not self.is_builtin and self.engine == ENGINE_CLI and self.loading_method != NO_LOADING
+        )
 
     @property
     def context_length(self) -> int | None:
@@ -96,13 +110,15 @@ class Provider:
 
     @property
     def models(self) -> list[str]:
-        """The models to choose from, each once, from the smallest to the largest."""
-        return list(dict.fromkeys(self.tiers))
+        """The models to choose from, each once, from the smallest to the largest. Those of
+        Claude for an account of Claude."""
+        return list(MODELS) if self.is_account else list(dict.fromkeys(self.tiers))
 
     @property
     def aliases(self) -> dict[str, str]:
-        """The model each of ``haiku``, ``sonnet`` and ``opus`` stands for."""
-        return dict(zip(ALIASES, self.tiers, strict=False))
+        """The model each of ``haiku``, ``sonnet`` and ``opus`` stands for (none for an account of
+        Claude: the CLI knows them)."""
+        return {} if self.is_account else dict(zip(ALIASES, self.tiers, strict=False))
 
     @property
     def is_builtin(self) -> bool:
@@ -124,11 +140,21 @@ class Provider:
             return _("The name of a provider has at most {limit} characters.").format(
                 limit=NAME_MAX
             )
+        return self._account_problem() if self.is_account else self._server_problem()
+
+    def _server_problem(self) -> str | None:
+        """What is wrong with the server of a provider (its address, its key, its models)."""
         if not self.base_url.startswith(_URL_SCHEMES) or " " in self.base_url:
             return _("The address of a provider starts with http:// or https://.")
         if self.uses_sdk and self.key_source != KEY_STORED:
             return _("The Agent SDK needs a key of the Anthropic API, saved by WxClaude.")
         return self._models_problem() or variables_problem(self.env)
+
+    def _account_problem(self) -> str | None:
+        """An account of Claude has no address and no models to give: only its sign-in."""
+        if self.key_source != KEY_STORED:
+            return _("An account of Claude needs its sign-in, saved by WxClaude.")
+        return variables_problem(self.env)
 
     def _models_problem(self) -> str | None:
         if not self.tiers:
@@ -151,6 +177,7 @@ class Provider:
             "env": dict(self.env),
             "engine": self.engine,
             "loading_method": self.loading_method,
+            "server_command": self.server_command,
         }
 
     @classmethod
@@ -178,6 +205,7 @@ class Provider:
             env=_variables(data.get("env")),
             engine=_text(data.get("engine"), ENGINE_CLI),  # unknown: Claude Code (__post_init__)
             loading_method=_text(data.get("loading_method"), NO_LOADING),
+            server_command=_text(data.get("server_command"), ""),
         )
 
 

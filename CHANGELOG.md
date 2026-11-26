@@ -6,6 +6,17 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: *Model loading* can be *llama.cpp server (command)*: for a model that only
+  `llama-server` reads, WxClaude starts the server with the command of the provider when it does
+  not answer (after unloading LM Studio), and stops it before LM Studio loads a model and when it
+  ends.
+- Added: several Claude accounts in one WxClaude. A provider with the engine *Claude account* signs in
+  from its form (WxClaude runs `claude setup-token`, the user allows the account in the browser and
+  pastes the code); it then appears in the Agent dialog with the models of Claude, and a conversation
+  can go on with it when the quota of another account is reached. Its sign-in is not masked,
+  so that every permission mode applies, *Automatic* included.
+- Fixed: the help said that the mode *Do not ask* asks nothing; it also refuses everything a
+  rule does not allow, and the help now points to *Automatic* to act without being asked.
 - Added: when `claude` is not in the PATH, WxClaude finds the copy of Claude Code that the Claude
   application for Windows keeps in its own folder (the most recent one, if several accounts each have
   theirs), or the one of the native installer: no script is needed to start WxClaude.

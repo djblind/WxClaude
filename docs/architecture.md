@@ -72,6 +72,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | Module | Role |
 |---|---|
 | `status.py` | `read_status` / `describe_status`: found or not, version and connection of Claude Code, asked of the program (`--version`, `auth status`); `read_login`: only the connection, for the check at the start (run in a thread). |
+| `account_token.py` | `AccountSignIn`: `claude setup-token` in an invisible pseudo-console (`pywinpty`), in a thread; the events `TokenUrl`, `TokenReceived` (the token, not in the `repr`) and `TokenEnded`; `send_code` writes the code of the page, `cancel` ends it. |
 | `auth.py` | `ClaudeLogin`: `claude auth login --claudeai` with no console and its input closed, in a thread; the events `LoginUrl` (the address the CLI prints) and `LoginEnded` (success, cancelled, what it printed); `cancel` ends the process and its children. |
 | `claude_projects.py` | The folders Claude Code has worked in, read from `<config>/projects`; the files of a session (what deleting it removes). |
 | `session_reader.py` | The reader of the session files of the CLI: the messages, the last agent, the usage, the totals of the session and its first time. |
@@ -128,6 +129,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `jsonstore.py` | Reading and writing the JSON files: atomic write, `.bak` backup, damaged file set aside (`.corrupt`). |
 | `workspace_state.py` | `WorkspaceState`: per workspace, the current conversation and the main agent of each conversation, the trust of the folder (`trusted`, `approval_asked`, `existed`) and the approved record of each watched file, `WatchRecord` (`workspaces/<hash>.json`; the copies are in `workspaces/<hash>.watch/`). |
 | `model_loading.py` | Loading the model of a message on a local server before it is sent: `LoadingMethod` (`LmStudioLoading`: the models loaded, the room left from the estimate of `lms` and the free memory, unload, load) with the registry `LOADING_METHODS`; `ModelLoadError` with a message for the user. Called by the runner, in the thread of the message. |
+| `local_servers.py` | The local servers WxClaude started itself (the method *llama.cpp server* of `model_loading.py`): `start_command`, `remember`, `running_servers`, `stop_servers` (also at the end of WxClaude); only these processes are ever stopped. |
 | `credit_ledger.py` | `CreditLedger`: what the Agent SDK providers spent from the API credits, by month and provider (`credits.json` beside the settings), read again before each addition. |
 | `workspace_stats.py` | `WorkspaceStats`: per workspace, the ledger of what all its conversations used, deleted ones included (`workspaces/<hash>.stats.json`), and the lines that show it. |
 | `shortcuts.py` | Configurable commands, shortcut notation (`Ctrl+Shift+O`), rules and conflicts. |
@@ -183,6 +185,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `provider_form_presenter.py` | `ProviderFormPresenter` and `ProviderEdit`: the form of a provider (the key button, held until the form is accepted, and the button for the models). |
 | `env_vars_presenter.py` | `EnvVarsPresenter`: the tab Environment variables (target file, variables, enable / set / remove, a warning for the versioned file). |
 | `claude_check.py` | `ClaudeCheck`: is Claude Code found? (at the start and when its path changes); `ClaudeCheckView` is what it asks of the interface. |
+| `account_sign_in_presenter.py` | `AccountSignInPresenter`: the sign-in to another account of Claude from the form of a provider (start, the page, the code, the token given back to the form, close); `AccountSignInView` is what it asks of the dialog. |
 | `login_presenter.py` | `LoginPresenter`: the sign-in to Claude Code (start with an optional e-mail address, cancel, close; the state read again at the end); `LoginView` is what it asks of the dialog. |
 | `run_presenter.py` | `RunPresenter`: a message sent to Claude (start, events, permission questions, progress, steps, end, interrupt; `stop` when the window closes and `claude_path` give the window what it needs of the runner) and the reading of the gauges (`refresh_gauges_if_due`, handled like a message: busy, silent), linked to the window by `RunLinks`; `RunView` is what it asks of the interface. |
 | `permission_handler.py` | `PermissionHandler`: the questions Claude asks during a message (permission to use a tool, structured questions, questions that expired, rules allowed for the message); `RunPresenter` owns it and hands the events to it. |
@@ -209,6 +212,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `main_window.py` | The conversation view, the prompt and the buttons, the menus, and the wiring of the presenters and their views. |
 | `conversation_screen.py` | `WxConversationScreen`: the view of `ConversationPresenter` (conversation view, prompt, title, name and agent dialogs, the confirmation and the Recycle Bin of a deletion). |
 | `claude_check_view.py` | `WxClaudeCheckView`: the view of `ClaudeCheck` (status bar, the message that offers the Preferences). |
+| `account_sign_in_dialog.py` | `AccountSignInDialog`: the dialog of the sign-in to another account of Claude, the view of `AccountSignInPresenter`; `token` holds the result. |
 | `login_dialog.py` | `LoginDialog`: the sign-in dialog, the view of `LoginPresenter` (it is the view itself: `wx.CallAfter`, its own message boxes). |
 | `run_view.py` | `WxRunView`: the view of `RunPresenter` (conversation view, status bar, permission dialog, `wx.CallAfter`). |
 | `gauge_watch.py` | `GaugeWatch`: the one-minute timer that asks whether the gauges are to be read (started by the application, not by the window). |

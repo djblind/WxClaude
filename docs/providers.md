@@ -205,6 +205,40 @@ holds the key. Before them, each provider whose engine is the Agent SDK has a li
 spent this month from the API credits, then a line that says where the balance is (`agent-sdk.md`,
 "Spending").
 
+## Accounts of Claude
+
+A provider whose engine is *Claude account (another account of a plan)* (`engine`: `claude_account`,
+`Provider.is_account`) is Claude with another sign-in: the models and the efforts of Claude, no
+address, no aliases, no models to type (the form does not check them and its button *Check the data
+retrieved* is greyed). Its key is the long-lived token of `claude setup-token` (one year, scope
+`user:inference`), kept encrypted like the other keys and given to the CLI as
+`CLAUDE_CODE_OAUTH_TOKEN`, which comes before the sign-in Claude Code saved. Nothing else changes:
+the same configuration folder, so the same conversations (a conversation goes on with another
+account when the quota of one is reached), and nothing more is turned off than for Claude. The
+inherited `ANTHROPIC_*` variables are removed as for any provider, so a local server set in the
+environment of WxClaude never catches the messages of an account. The relay is not used (there is
+no address to relay), and the token is not hidden from the tools of Claude whatever the transmission: hiding it (`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`) makes the CLI force the manual mode, so *Auto* and the other modes would never apply, and it would protect little since the sign-in of the main account is in `.credentials.json`, which the tools can read as well.
+
+**Signing in.** The key button of the form becomes *Sign in to the account* (*Forget the sign-in*
+once there is one) and opens a dialog (`AccountSignInDialog`, `AccountSignInPresenter`,
+`core/claude/account_token.py`). `claude setup-token` needs a terminal: through a pipe it prints
+nothing (measured 2026-11-26, CLI 2.1.321), so it runs in an invisible pseudo-console (ConPTY through
+`pywinpty`, a dependency for Windows only, 1000 columns so that nothing is cut). It opens the browser
+by itself and prints the address of the page (shown with *Open the page in the browser* and *Copy the
+address*, for another browser or a private window when the browser is signed in to another account),
+then waits: the page of Claude shows a code after the user allowed the account
+(`redirect_uri` `platform.claude.com/oauth/code/callback`), which the user pastes in the field *Code*
+(a password field) and sends; WxClaude writes it to the console followed by Enter. The command then
+prints the token (`sk-ant-oat…`), which is read from the text of the console without its control
+sequences; the command is ended if it does not end by itself 10 seconds later. The token goes back
+to the form and is saved with OK. It is never written to the log, and an error message never holds
+it nor the details of the address.
+
+**Not done.** The gauges (`/usage`) and the alerts of the rate limits are those of the main sign-in;
+whether the token (scope `user:inference`) can read the gauges of its own account is not measured.
+The end of the year of a token is not told ahead: the CLI refuses it, the message says so, and the
+user signs in again.
+
 ## Model loading
 
 A local server holds its models in the memory of the computer, which rarely has room for two big ones.
@@ -232,6 +266,19 @@ Agent SDK engine, and Claude is never concerned.
 4. `POST /api/v1/models/load` with `model`, `parallel` 1 and `context_length` when set (15 minutes at
    most). The API refuses `identifier`, `gpu` and `ttl` (`unrecognized_keys`): the model is known by its
    key, and its other settings are those saved in LM Studio for it.
+
+**llama.cpp server** (`loading_method` `llama_server`), for a model that only `llama-server` reads
+(Inkling 2 Mini, measured 2026-11-21: LM Studio does not know its architecture). The provider holds
+the command line of the server (`server_command`, the field *Server command* of the form, run as it
+is: `CreateProcess` on Windows, no shell; it is the user's own command). Before a message:
+`GET <address>/health`; an answer means the server runs, and nothing is done. Otherwise the models
+of LM Studio (`http://localhost:1234`, if it answers) are unloaded and the servers WxClaude started
+are stopped, to free the graphics card; the command is started without a window and without its
+output, and WxClaude waits (15 minutes at most) until `/health` answers. A server that ends at once
+is an error with its exit code; one that never answers is stopped. The servers WxClaude started are
+kept in `core/config/local_servers.py`: the method of LM Studio stops them before it loads a model,
+and they are stopped when WxClaude ends (`atexit`). A server the user started by hand is never
+stopped. The model name of the provider is the `--alias` of the command.
 
 This runs in the thread of the message (`ClaudeRunner._prepare`): the interface says *Not enough memory:
 unloading …* and *Loading the model …, please wait* (progress announcements), Interrupt stops the

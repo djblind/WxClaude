@@ -214,7 +214,7 @@ def test_the_estimate_of_lms_is_read() -> None:
 
 
 def test_the_registry() -> None:
-    assert [m.id for m in LOADING_METHODS] == [NONE, "lmstudio"]
+    assert [m.id for m in LOADING_METHODS] == [NONE, "lmstudio", "llama_server"]
     assert isinstance(loading_method("unknown"), NoLoading)
     assert not loading_method(NONE).active
     assert isinstance(loading_method("lmstudio"), LmStudioLoading)

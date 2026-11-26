@@ -16,6 +16,9 @@ dependencies = [
     # The engine "Agent SDK" of a provider (docs/agent-sdk.md); its bundled claude program is
     # left out of the packaged application, which gives the SDK the user's own.
     "claude-agent-sdk>=0.2",
+    # The sign-in to another account of Claude (``claude setup-token`` needs a terminal, run in an
+    # invisible pseudo-console: core/claude/account_token.py).
+    "pywinpty>=2; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
