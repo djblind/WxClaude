@@ -24,7 +24,13 @@
   (`Subagent traducteur: Write dial_zh_03.json`). The text of a subagent is only there, not in the
   conversation: the subagent gives its result to Claude. The name is the one of the provider of the
   agent, as in the announcements. Nothing is said: the field is read when the user goes to it; a line
-  added never moves the focus nor the caret. It is emptied when a message is sent and keeps the 5000
+  added never moves the focus nor the caret.
+- **Progress spoken with care** (`ui/run_view.py`): during a long work the progress (category
+  "Progress of Claude") comes many times a minute and cut the screen reader everywhere, the
+  Preferences included. It is now spoken only while the focus is in the main window and not in the
+  Activity field (which shows the same thing); and the frequent ones (thinking, a tool, answering)
+  at most once every five seconds. Otherwise it is only written in the status bar. The rare ones
+  (interrupting, a retry of the server, a model that loads) are spoken at once. It is emptied when a message is sent and keeps the 5000
   last lines. It costs no token: everything comes from the stream the CLI sends anyway
   (`core/claude/activity.py`). The thinking of the model is not shown: the CLI gives its blocks
   without their text (checked 2026-11-27, Opus 5.5).

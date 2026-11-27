@@ -73,7 +73,8 @@ def test_sending_runs_claude_and_shows_the_answer(
     assert conversation.can_send
     assert sink.messages[-1] == "Claude has answered."
     assert sink.messages.count("Claude is thinking.") == 1  # not repeated
-    assert "Claude uses the tool Read." in sink.messages
+    # The tool comes less than five seconds after "thinking": only the status bar had it.
+    assert "Claude uses the tool Read." not in sink.messages
     sent = json.loads(log.read_text(encoding="utf-8"))
     # The first message gives the name of the conversation to the CLI, which keeps it.
     assert sent["arguments"][-4:] == [

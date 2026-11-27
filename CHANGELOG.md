@@ -16,6 +16,10 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 - Added: an *Activity* field under the prompt shows what Claude does while it answers, one line per
   action: the tools with the file or the command, what Claude writes between two actions, and what
   its subagents do. It costs no token and never takes the focus; it is emptied at each message.
+- Modified: the progress ("Claude is thinking", "Claude uses the tool Bash") no longer cuts the
+  screen reader at every step: it is spoken only in the main window, not while you read the
+  Activity field, a dialog such as the Preferences, or another application, and at most once
+  every five seconds. It is always in the status bar.
 - Added: WxClaude watches the size of the conversation, which Claude reads again at every message.
   Over a threshold (100 000 tokens by default), it warns once, or compacts the conversation by itself
   (`/compact`), as chosen in the Preferences, page Workspace, *Long conversation*. The Statistics

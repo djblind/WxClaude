@@ -150,6 +150,7 @@ The *Activity* field (Alt+Y) shows what Claude does while it answers, one line p
 
 It comes after the send buttons with the Tab key. It is read-only: move in it with the arrows.
 A new line never moves you, and nothing is announced: read it when you like.
+While you are in this field, in a dialog such as the Preferences or in another application, "Claude is thinking" and "Claude uses the tool…" are not spoken, so that your reading is not cut. In the main window they are spoken at most once every 5 seconds. They always stay in the status bar.
 It is emptied at each message sent. It costs no token: WxClaude receives all this anyway.
 The thinking of Claude is not there, because Claude Code does not give its text.
 
