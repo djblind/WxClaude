@@ -25,7 +25,7 @@ from wxclaude.core.claude.events import (
     TurnEnded,
     TurnResult,
 )
-from wxclaude.core.claude.launch import ProviderLaunch, launch_for
+from wxclaude.core.claude.launch import ProviderLaunch
 from wxclaude.core.claude.permissions import (
     Decision,
 )
@@ -38,7 +38,7 @@ from wxclaude.core.claude.progress import (
     turn_outcome,
 )
 from wxclaude.core.claude.questions import Question
-from wxclaude.core.claude.runner import ClaudeRunner, RunRequest
+from wxclaude.core.claude.runner import ClaudeRunner
 from wxclaude.core.config.agents import Agent
 from wxclaude.core.config.workspace_stats import WorkspaceStats
 from wxclaude.core.conversation.messages import Message, Role
@@ -48,13 +48,13 @@ from wxclaude.core.errors import (
     ProviderError,
     RunnerError,
 )
-from wxclaude.core.security.restricted import restricted_permission_mode
 from wxclaude.core.speech.announcements import DEFAULT_SPEAKER, Announce, AnnouncementCenter
 from wxclaude.i18n import _
 from wxclaude.presenters.gauge_reader import GaugeLinks, GaugeReader
 from wxclaude.presenters.long_conversation_guard import LongConversationGuard
 from wxclaude.presenters.permission_handler import PermissionHandler, PermissionLinks
 from wxclaude.presenters.progress_announcer import ProgressAnnouncer, ProgressLinks
+from wxclaude.presenters.run_request_builder import RunRequestBuilder
 from wxclaude.presenters.shared import Shared, read_session
 from wxclaude.presenters.stats_recorder import StatsRecorder
 
@@ -139,10 +139,9 @@ class RunPresenter:
         self._settings = shared.settings
         self._usage = shared.usage
         self._files = shared.files
-        self._security = shared.security
         self._providers = shared.providers
-        self._relay = shared.relay
         self._links = links
+        self._requests = RunRequestBuilder(shared, links)
         self._busy = False  # True while Claude is answering
         self._turn_agent = shared.settings.default_agent  # the agent of the message being answered
         self._turn_result: TurnResult | None = None
@@ -155,7 +154,7 @@ class RunPresenter:
                 links.workspace,
                 links.is_closing,
                 links.state_changed,
-                lambda: self._restricted,
+                lambda: self._requests.restricted,
             ),
         )
         self._local_messages = 0  # messages added by this run, for their identifiers
@@ -208,45 +207,16 @@ class RunPresenter:
         a reading started."""
         return not self.busy and self._gauges.refresh_if_due(now)
 
-    @property
-    def _restricted(self) -> bool:
-        """Is the folder not trusted? The CLI is then launched so that it ignores the project."""
-        return self._security is not None and self._security.restricted
-
-    @property
-    def _max_turns(self) -> int:
-        """The limit of turns of the workspace (0: none)."""
-        state = None if self._security is None else self._security.state
-        return 0 if state is None else state.max_turns
-
     def start(self, text: str, agent: Agent) -> bool:
         """Start Claude on ``text``; False (with the error shown) if it cannot be started."""
-        workspace = self._links.workspace()
-        if workspace is None:
-            return False
-        conversation_id = self._links.conversation_id()
         try:
-            provider = launch_for(
-                agent.provider,
-                self._providers,
-                transmission=self._settings.key_transmission,
-                relay=self._relay,
-            )
+            request = self._requests.build(text, agent)
         except (ProviderError, KeyVaultError) as error:
             self._view.show_error(_("Claude cannot be started.\n{error}").format(error=error))
             return False
-        request = RunRequest(
-            text,
-            agent,
-            conversation_id,
-            self._files.find_session(conversation_id) is not None,
-            workspace,
-            self._links.conversation_name(),  # given to the CLI by the first message only
-            self._links.fork_from(),  # a branch: its first message copies that history
-            restricted=self._restricted,
-            provider=provider,
-            max_turns=self._max_turns,
-        )
+        if request is None:
+            return False
+        provider = request.provider
         self.runner.permission_channel = self._settings.permission_channel
         self.runner.hook_timeout_seconds = self._settings.hook_timeout_minutes * 60
         try:
@@ -260,8 +230,8 @@ class RunPresenter:
         self._turn_result = None
         self._refused = None
         self._turn_model = ""
-        self._turn_conversation = conversation_id
-        self._turn_mode = self._mode_sent(agent)
+        self._turn_conversation = request.session_id
+        self._turn_mode = self._requests.mode_sent(agent)
         self._turn_masked = provider is not None and provider.active and provider.scrub
         self._stats.start_message(_credit_provider(provider))
         self._progress.reset()
@@ -271,12 +241,6 @@ class RunPresenter:
         self._view.append_message(Message(self._local_id(), Role.USER, text))
         self._progress.show(Progress(Announce.CLAUDE_THINKING))
         return True
-
-    def _mode_sent(self, agent: Agent) -> str:
-        """The permission mode the CLI is given for ``agent``: a folder that is not trusted
-        keeps only the strict modes, the others become manual (``RunRequest.restricted``)."""
-        mode = agent.permission_mode or ""
-        return restricted_permission_mode(mode) if self._restricted else mode
 
     def interrupt(self) -> None:
         """Stop the message being answered, or the reading of the gauges (nothing happens if
