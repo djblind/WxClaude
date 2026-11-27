@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
+from wxclaude.core.claude.activity import ActivityLog
 from wxclaude.core.claude.events import (
     ApiRetry,
     AssistantText,
@@ -100,6 +101,14 @@ class RunView(Protocol):
         """The step field of the status bar ('' when there is none)."""
         ...
 
+    def show_activity(self, line: str) -> None:
+        """Add a line at the end of the Activity field (it never takes the focus)."""
+        ...
+
+    def clear_activity(self) -> None:
+        """Empty the Activity field: a new message starts."""
+        ...
+
     def show_error(self, message: str) -> None:
         """Tell the user that something failed."""
         ...
@@ -179,6 +188,7 @@ class RunPresenter:
             shared.files,
             ProgressLinks(self._say, lambda: self._speaker, links.conversation_id),
         )
+        self._activity = ActivityLog()  # the lines of the Activity field
         self._long = LongConversationGuard(
             lambda: shared.usage.long,
             shared.settings,
@@ -236,6 +246,8 @@ class RunPresenter:
         self._stats.start_message(_credit_provider(provider))
         self._progress.reset()
         self._long.message_started(text)
+        self._activity.start()
+        self._view.clear_activity()
         self._permissions.start_message()
         self._links.state_changed()
         self._view.append_message(Message(self._local_id(), Role.USER, text))
@@ -286,16 +298,9 @@ class RunPresenter:
         """An event of the run, on the interface thread."""
         if self._links.is_closing():
             return
+        self._note_activity(event)
         if isinstance(event, AssistantText):
-            self._view.append_message(
-                Message(
-                    self._local_id(),
-                    Role.ASSISTANT,
-                    event.text.strip(),
-                    model=event.model,
-                    effort=self._turn_agent.effort if event.model else None,
-                )
-            )
+            self._on_text(event)
         elif isinstance(event, ToolUsed) and self._progress.show_step(event):
             return
         elif isinstance(event, PermissionRequest | PermissionExpired | ApiRetry):
@@ -321,6 +326,27 @@ class RunPresenter:
         self._long.observe(event)
         if isinstance(event, Compacted):
             self._progress.announce(compaction_progress(event))
+
+    def _note_activity(self, event: RunEvent) -> None:
+        """The line of the Activity field for ``event``, if it has one."""
+        line = self._activity.line_for(event, self._speaker)
+        if line is not None:
+            self._view.show_activity(line)
+
+    def _on_text(self, event: AssistantText) -> None:
+        """A text of the answer joins the conversation; the one of a subagent is only in the
+        Activity field (the subagent gives its result to Claude, not to the user)."""
+        if event.parent:
+            return
+        self._view.append_message(
+            Message(
+                self._local_id(),
+                Role.ASSISTANT,
+                event.text.strip(),
+                model=event.model,
+                effort=self._turn_agent.effort if event.model else None,
+            )
+        )
 
     def _on_question_or_retry(
         self, event: PermissionRequest | PermissionExpired | ApiRetry

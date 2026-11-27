@@ -66,6 +66,7 @@ class FakeView:
         self._decisions = list(decisions)
         self.questions: list[list[Question]] = []  # the structured questions asked
         self.question_answers: dict[str, list[str]] | None = None  # what the user answers
+        self.activity: list[str] = []  # the lines of the Activity field, since the last clear
 
     def call_after(self, function: Callable[[RunEvent], None], event: RunEvent) -> None:
         function(event)
@@ -96,6 +97,12 @@ class FakeView:
 
     def show_step(self, text: str) -> None:
         self.steps.append(text)
+
+    def show_activity(self, line: str) -> None:
+        self.activity.append(line)
+
+    def clear_activity(self) -> None:
+        self.activity.clear()
 
     def show_error(self, message: str) -> None:
         self.errors.append(message)

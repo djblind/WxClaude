@@ -129,6 +129,18 @@ While Claude answers, sending is greyed out. The field stays usable for typing.
 The *Interrupt Claude* button stops the answer and the programs started by Claude.
 It is only active during an answer.
 
+### Activity
+
+The *Activity* field (Alt+Y) shows what Claude does while it answers, one line per action:
+- the tool used, with the file or the command ("Claude: Bash python -I verif.py");
+- what Claude writes between two actions;
+- the subagents it launches, then what they do ("Subagent traducteur: Write dial_zh_03.json").
+
+It comes after the send buttons with the Tab key. It is read-only: move in it with the arrows.
+A new line never moves you, and nothing is announced: read it when you like.
+It is emptied at each message sent. It costs no token: WxClaude receives all this anyway.
+The thinking of Claude is not there, because Claude Code does not give its text.
+
 ### Status bar
 
 The status bar has three zones. It does not take the focus: use the command of your screen reader to read it.

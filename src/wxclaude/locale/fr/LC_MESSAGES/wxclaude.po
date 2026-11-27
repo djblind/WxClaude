@@ -2190,3 +2190,30 @@ msgstr "Me prévenir"
 
 msgid "Compact it automatically"
 msgstr "La compacter automatiquement"
+
+msgid "{who}: {text}"
+msgstr "{who} : {text}"
+
+msgid "{who}: the tool {tool} failed."
+msgstr "{who} : l'outil {tool} a échoué."
+
+msgid "{who} launches the subagent {agent}: {task}"
+msgstr "{who} lance le sous-agent {agent} : {task}"
+
+msgid "{who} launches the subagent {agent}"
+msgstr "{who} lance le sous-agent {agent}"
+
+msgid "{who}: {tool} {target}"
+msgstr "{who} : {tool} {target}"
+
+msgid "{who}: {tool}"
+msgstr "{who} : {tool}"
+
+msgid "Subagent"
+msgstr "Sous-agent"
+
+msgid "Subagent {agent}"
+msgstr "Sous-agent {agent}"
+
+msgid "Activit&y"
+msgstr "Activi&té"

@@ -31,6 +31,7 @@ from wxclaude.presenters.workspace_settings_presenter import (
     WorkspaceSettingsLinks,
     WorkspaceSettingsPresenter,
 )
+from wxclaude.ui.activity_panel import ActivityPanel
 from wxclaude.ui.claude_check_view import WxClaudeCheckView
 from wxclaude.ui.conversation_screen import WxConversationScreen
 from wxclaude.ui.conversation_view import ConversationView
@@ -178,7 +179,8 @@ class MainWindow(wx.Frame):
             self._feedback.show_position,
         )
         self._search = SearchPresenter(WxSearchView(self._conversation, self._feedback))
-        self._run_view = WxRunView(self, self._conversation, self._feedback)
+        self._activity = ActivityPanel(panel)  # the run shows in it; after the prompt in Tab order
+        self._run_view = WxRunView(self, self._conversation, self._feedback, self._activity)
         self._run = RunPresenter(
             self._run_view,
             runner,
@@ -217,11 +219,13 @@ class MainWindow(wx.Frame):
             self._settings.shortcut_for,
         )
         self._prompt = self._prompt_area.field
+        self._activity.follow(panel.GetChildren()[-1])  # the last control of the prompt
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(conversation_label, 0, wx.LEFT | wx.TOP, 6)
         sizer.Add(self._conversation, 3, wx.EXPAND | wx.ALL, 6)
         self._prompt_area.add_to(sizer)
+        self._activity.add_to(sizer)
         panel.SetSizer(sizer)
         self._conversations = ConversationPresenter(
             WxConversationScreen(

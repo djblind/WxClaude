@@ -15,6 +15,19 @@
 - Buttons: *Send*, *Send with the alternative agent* (their labels show the current shortcuts) and
   *Interrupt Claude* (active only while Claude is answering; it also stops the programs Claude
   started). While Claude answers, Send is greyed; the prompt field stays usable.
+- **Activity** (access key Alt+Y; *Activité*, Alt+T, in French): a read-only field after the buttons in the
+  Tab order, that shows what Claude does while it answers, one line per action: the tool and what it
+  works on (`Claude: Bash python -I verif.py`, `Claude: Read D:f4\SUIVI_FF4.txt`), the text Claude
+  writes between two actions (`Claude: I check the two files.`, on one line, cut at 300 characters),
+  a failed tool (`Claude: the tool Bash failed.`), the launch of a subagent (`Claude launches the
+  subagent traducteur: Translate dial_zh_03`) and then what that subagent does and says
+  (`Subagent traducteur: Write dial_zh_03.json`). The text of a subagent is only there, not in the
+  conversation: the subagent gives its result to Claude. The name is the one of the provider of the
+  agent, as in the announcements. Nothing is said: the field is read when the user goes to it; a line
+  added never moves the focus nor the caret. It is emptied when a message is sent and keeps the 5000
+  last lines. It costs no token: everything comes from the stream the CLI sends anyway
+  (`core/claude/activity.py`). The thinking of the model is not shown: the CLI gives its blocks
+  without their text (checked 2026-11-27, Opus 5.5).
 - **Claude Code not found**: once the window is up, if `claude` cannot be started (not in the PATH nor in the folders of the Claude application, or
   the file chosen in Preferences > Claude does not exist) a message says "Claude Code was not found on this
   computer. Install it, or give its path in File > Preferences > Claude." with the buttons *Open the

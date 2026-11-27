@@ -9,6 +9,7 @@ from wxclaude.core.claude.permissions import Decision
 from wxclaude.core.claude.questions import Question
 from wxclaude.core.conversation.messages import Message
 from wxclaude.core.speech.announcements import Announce
+from wxclaude.ui.activity_panel import ActivityPanel
 from wxclaude.ui.conversation_view import ConversationView
 from wxclaude.ui.feedback import Feedback
 from wxclaude.ui.permission_dialog import PermissionDialog
@@ -18,13 +19,20 @@ from wxclaude.ui.question_dialog import QuestionDialog
 class WxRunView:
     """Shows a run in the conversation view and the status bar, asks with the permission dialog.
 
-    ``parent`` is the window of the dialogs.
+    ``parent`` is the window of the dialogs; ``activity`` is the Activity field.
     """
 
-    def __init__(self, parent: wx.Window, view: ConversationView, feedback: Feedback) -> None:
+    def __init__(
+        self,
+        parent: wx.Window,
+        view: ConversationView,
+        feedback: Feedback,
+        activity: ActivityPanel,
+    ) -> None:
         self._parent = parent
         self._view = view
         self._feedback = feedback
+        self._activity = activity
         self._open_question: tuple[PermissionRequest, wx.Dialog] | None = None
 
     def call_after(self, function: Callable[[RunEvent], None], event: RunEvent) -> None:
@@ -78,3 +86,9 @@ class WxRunView:
 
     def show_error(self, message: str) -> None:
         self._feedback.show_error(message)
+
+    def show_activity(self, line: str) -> None:
+        self._activity.append(line)
+
+    def clear_activity(self) -> None:
+        self._activity.clear()

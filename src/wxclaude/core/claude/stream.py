@@ -117,8 +117,9 @@ def _assistant(entry: dict[str, object]) -> list[RunEvent]:
     model = message.get("model")
     model_name = model if isinstance(model, str) and model != "<synthetic>" else None
     events: list[RunEvent] = []
+    parent = _text(entry.get("parent_tool_use_id"))  # '' for the main conversation
     size = _context_size(message.get("usage"))
-    if size and model_name and entry.get("parent_tool_use_id") is None:  # not a subagent
+    if size and model_name and not parent:  # a subagent has a conversation of its own
         events.append(ContextSize(size))
     content = message.get("content")
     for block in content if isinstance(content, list) else []:
@@ -126,7 +127,7 @@ def _assistant(entry: dict[str, object]) -> list[RunEvent]:
             continue
         kind = block.get("type")
         if kind == "text" and _text(block.get("text")).strip():
-            events.append(AssistantText(_text(block.get("text")), model_name))
+            events.append(AssistantText(_text(block.get("text")), model_name, parent))
         elif kind == "thinking":
             events.append(Thinking())
         elif kind == "tool_use":
@@ -136,6 +137,7 @@ def _assistant(entry: dict[str, object]) -> list[RunEvent]:
                     _text(block.get("id")),
                     _text(block.get("name")),
                     raw_input if isinstance(raw_input, dict) else {},
+                    parent,
                 )
             )
     return events
@@ -144,8 +146,9 @@ def _assistant(entry: dict[str, object]) -> list[RunEvent]:
 def _user(entry: dict[str, object]) -> list[RunEvent]:
     message = entry.get("message")
     content = message.get("content") if isinstance(message, dict) else None
+    parent = _text(entry.get("parent_tool_use_id"))
     return [
-        ToolResult(_text(block.get("tool_use_id")), bool(block.get("is_error")))
+        ToolResult(_text(block.get("tool_use_id")), bool(block.get("is_error")), parent)
         for block in (content if isinstance(content, list) else [])
         if isinstance(block, dict) and block.get("type") == "tool_result"
     ]

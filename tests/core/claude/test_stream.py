@@ -248,3 +248,27 @@ def test_the_size_is_not_told_by_a_subagent_a_synthetic_answer_or_an_empty_usage
     assert _parse(_answer(usage, parent="toolu_1")) == []
     assert _parse(_answer(usage, model="<synthetic>")) == []
     assert _parse(_answer({"input_tokens": 0, "output_tokens": 0})) == []
+
+
+def test_the_events_of_a_subagent_name_its_call() -> None:
+    entry = {
+        "type": "assistant",
+        "parent_tool_use_id": "toolu_A",
+        "message": {
+            "model": "claude-sonnet-5-5",
+            "content": [
+                {"type": "text", "text": "Hi"},
+                {"type": "tool_use", "id": "t", "name": "Read", "input": {}},
+            ],
+        },
+    }
+    assert _parse(entry) == [
+        AssistantText("Hi", "claude-sonnet-5-5", "toolu_A"),
+        ToolUsed("t", "Read", {}, "toolu_A"),
+    ]
+    result = {
+        "type": "user",
+        "parent_tool_use_id": "toolu_A",
+        "message": {"content": [{"type": "tool_result", "tool_use_id": "t", "is_error": True}]},
+    }
+    assert _parse(result) == [ToolResult("t", True, "toolu_A")]

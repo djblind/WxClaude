@@ -6,6 +6,9 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: an *Activity* field under the prompt shows what Claude does while it answers, one line per
+  action: the tools with the file or the command, what Claude writes between two actions, and what
+  its subagents do. It costs no token and never takes the focus; it is emptied at each message.
 - Added: WxClaude watches the size of the conversation, which Claude reads again at every message.
   Over a threshold (100 000 tokens by default), it warns once, or compacts the conversation by itself
   (`/compact`), as chosen in the Preferences, page Workspace, *Long conversation*. The Statistics

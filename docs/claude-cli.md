@@ -174,6 +174,12 @@ One JSON object per line:
   "Dis juste bonjour." already reads 48834 tokens (2 sent, 18758 written to the cache, 30074 read from
   it): the instructions and the tools of the CLI. The Agent SDK gives the same in
   `AssistantMessage.usage` and `parent_tool_use_id` (`sdk_messages.py`).
+- The lines of a subagent come in the same stream, with `parent_tool_use_id` set to the call of its
+  `Agent` tool: `assistant` (text and tools, its own model: `claude-sonnet-5-5` for a subagent with
+  `model: sonnet`) and `user` (tool results, with `parent_tool_use_id` at the top too). The `Agent`
+  call gives `subagent_type` and `description`; a subagent launched in the background answers the
+  `Agent` call at once (checked with haiku, CLI 2.1.321, 2026-11-27). `thinking` blocks come without
+  their text (`"thinking": ""`, seen in a session of Opus 5.5).
 - `system` / `init` gives the mode the CLI really uses (measured with haiku, 2026-11-11, no provider):
   asked `manual` gives `default`; `acceptEdits`, `plan` and `dontAsk` keep their name; **`auto` gives
   `default`** (the mode is not applied, even with Claude).

@@ -38,27 +38,31 @@ class Thinking:
 
 @dataclass(frozen=True, slots=True)
 class AssistantText:
-    """A complete block of text of the answer."""
+    """A complete block of text of the answer. ``parent`` is the call of the ``Agent`` tool of the
+    subagent that wrote it ('' for the main conversation)."""
 
     text: str
     model: str | None
+    parent: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class ToolUsed:
-    """Claude calls a tool."""
+    """Claude calls a tool; ``parent`` as for ``AssistantText``."""
 
     tool_id: str
     name: str
     input: dict[str, object] = field(default_factory=dict)
+    parent: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class ToolResult:
-    """The result of a tool call came back."""
+    """The result of a tool call came back; ``parent`` as for ``AssistantText``."""
 
     tool_id: str
     is_error: bool
+    parent: str = ""
 
 
 @dataclass(frozen=True, slots=True)

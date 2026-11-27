@@ -127,6 +127,18 @@ Pendant que Claude répond, l'envoi est grisé. Le champ reste utilisable pour d
 Le bouton *Interrompre Claude* arrête la réponse et les programmes lancés par Claude.
 Il n'est actif que pendant une réponse.
 
+### Activité
+
+Le champ *Activité* (Alt+T) montre ce que fait Claude pendant qu'il répond, une ligne par action :
+- l'outil utilisé, avec le fichier ou la commande (« Claude : Bash python -I verif.py ») ;
+- ce que Claude écrit entre deux actions ;
+- les sous-agents qu'il lance, puis ce qu'ils font (« Sous-agent traducteur : Write dial_zh_03.json »).
+
+Il se trouve après les boutons d'envoi quand on appuie sur Tab. Il est en lecture seule : on le parcourt avec les flèches.
+Une nouvelle ligne ne vous déplace jamais, et rien n'est annoncé : vous le lisez quand vous voulez.
+Il est vidé à chaque message envoyé. Il ne coûte aucun token : WxClaude reçoit déjà tout cela.
+Les réflexions de Claude n'y sont pas, car Claude Code n'en donne pas le texte.
+
 ### Barre d'état
 
 La barre d'état a trois zones. Elle ne prend pas le focus : utilisez la commande de votre lecteur d'écran pour la lire.

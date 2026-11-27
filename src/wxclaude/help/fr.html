@@ -107,6 +107,17 @@ Il est grisé tant qu'il n'y a pas de conversation active.</p>
 Pendant que Claude répond, l'envoi est grisé. Le champ reste utilisable pour de la saisie.</p>
 <p>Le bouton <em>Interrompre Claude</em> arrête la réponse et les programmes lancés par Claude.
 Il n'est actif que pendant une réponse.</p>
+<h3>Activité</h3>
+<p>Le champ <em>Activité</em> (Alt+T) montre ce que fait Claude pendant qu'il répond, une ligne par action :</p>
+<ul>
+<li>l'outil utilisé, avec le fichier ou la commande (« Claude : Bash python -I verif.py ») ;</li>
+<li>ce que Claude écrit entre deux actions ;</li>
+<li>les sous-agents qu'il lance, puis ce qu'ils font (« Sous-agent traducteur : Write dial_zh_03.json »).</li>
+</ul>
+<p>Il se trouve après les boutons d'envoi quand on appuie sur Tab. Il est en lecture seule : on le parcourt avec les flèches.
+Une nouvelle ligne ne vous déplace jamais, et rien n'est annoncé : vous le lisez quand vous voulez.
+Il est vidé à chaque message envoyé. Il ne coûte aucun token : WxClaude reçoit déjà tout cela.
+Les réflexions de Claude n'y sont pas, car Claude Code n'en donne pas le texte.</p>
 <h3>Barre d'état</h3>
 <p>La barre d'état a trois zones. Elle ne prend pas le focus : utilisez la commande de votre lecteur d'écran pour la lire.</p>
 <ul>

@@ -47,7 +47,11 @@ def stream_entry(message: Message) -> dict[str, object] | None:
             for block in blocks
             if isinstance(block, ToolResultBlock)
         ]
-        return {"type": "user", "message": {"content": results}}
+        return {
+            "type": "user",
+            "parent_tool_use_id": message.parent_tool_use_id,
+            "message": {"content": results},
+        }
     if isinstance(message, ResultMessage):
         return _result(message)
     if isinstance(message, RateLimitEvent):
