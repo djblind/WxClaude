@@ -25,7 +25,7 @@ def test_while_the_gauges_are_read_the_sending_and_the_usage_are_greyed(
     assert window._menu.usage_item.IsEnabled()
     assert not window._menu.interrupt_item.IsEnabled()
     # the alerts of the fake gauges (over their thresholds) are said, not written
-    assert window.GetStatusBar().GetStatusText(2) == "Ready, gauge at 96 %"
+    assert window.GetStatusBar().GetStatusText(2).startswith("Ready, gauge at 96 %, resets on ")
 
 
 def test_the_gauges_are_not_read_without_a_workspace(window: MainWindow) -> None:

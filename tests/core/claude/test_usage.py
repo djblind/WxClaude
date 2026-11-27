@@ -218,3 +218,17 @@ def test_ready_adds_the_week_from_its_last_alert_threshold() -> None:
     assert tracker.ready_line() == "Ready, gauge at 50 %, week at 76 %"
     tracker.record_rate_limit(_rate(RateWindow("seven_day", 0.75, 1)), NOW)
     assert tracker.ready_line() == "Ready, gauge at 50 %, week at 75 %"
+
+
+def test_ready_says_when_the_gauge_of_the_five_hours_resets() -> None:
+    tracker = UsageTracker()
+    now = datetime(2026, 11, 26, 11, 0)
+    soon = int(datetime(2026, 11, 26, 13, 40).timestamp())
+    tracker.record_rate_limit(_rate(RateWindow("five_hour", 0.09, soon)), now)
+    assert tracker.ready_line(now) == "Ready, gauge at 9 %, resets at 13:40"
+    tomorrow = int(datetime(2026, 11, 27, 1, 5).timestamp())
+    tracker.record_rate_limit(_rate(RateWindow("five_hour", 0.09, tomorrow)), now)
+    assert tracker.ready_line(now) == "Ready, gauge at 9 %, resets on 2026-11-27 01:05"
+    tracker.record_rate_limit(_rate(RateWindow("five_hour", 0.09, soon)), now)
+    later = datetime(2026, 11, 26, 14, 0)
+    assert tracker.ready_line(later) == "Ready, gauge at 9 %"  # past: not said

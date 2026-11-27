@@ -19,8 +19,13 @@ class _Setup:
         self.first = wx.TextCtrl(self.frame)
         self.second = wx.TextCtrl(self.frame)
         self.interrupt = wx.Button(self.frame, label="Interrupt")
-        self.keeper = FocusKeeper(self.frame, lambda: self.closing, lambda: self.default)
+        self.announced: list[wx.Window] = []
+        self.keeper = FocusKeeper(
+            self.frame, lambda: self.closing, lambda: self.default, self.announced.append
+        )
         self.frame.Show()
+        wx.Yield()
+        self.announced.clear()  # the real activation of the window when it shows
 
     def activate(self, active: bool) -> None:
         event = wx.ActivateEvent(wx.wxEVT_ACTIVATE, active)
@@ -94,3 +99,28 @@ def test_nothing_is_done_while_the_window_closes(setup: _Setup) -> None:
     setup.closing = True
     setup.activate(True)
     assert setup.first.HasFocus()
+
+
+def test_the_focus_is_announced_even_when_it_did_not_move(setup: _Setup) -> None:
+    """Windows sends no focus event when the focus stays put: NVDA stayed on the window."""
+    setup.second.SetFocus()
+    setup.away_and_back()
+    assert setup.second.HasFocus()
+    assert setup.announced == [setup.second]
+
+
+def test_the_focus_given_back_by_a_dialog_is_announced(setup: _Setup) -> None:
+    setup.first.SetFocus()
+    setup.frame.Disable()  # what a modal dialog does to its parent
+    setup.activate(False)
+    setup.frame.Enable()
+    setup.activate(True)
+    assert setup.announced == [setup.first]
+
+
+def test_nothing_is_announced_while_the_window_closes(setup: _Setup) -> None:
+    setup.second.SetFocus()
+    setup.activate(False)
+    setup.closing = True
+    setup.activate(True)
+    assert setup.announced == []

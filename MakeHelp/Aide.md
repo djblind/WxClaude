@@ -122,7 +122,7 @@ La barre d'état a trois zones. Elle ne prend pas le focus : utilisez la command
 - La position : `Message 3 sur 8` indique le message où se trouve le curseur parmi les vôtres. Elle est vide s'il n'y en a pas.
 - L'étape : `Étape 2 sur 5 : sujet` indique la tâche de la liste de Claude qu'il vient de commencer. Elle est vide s'il n'y en a pas et quand WxClaude attend votre message.
 - Le message : la dernière annonce.
-Quand WxClaude est prêt à recevoir des messages, il l'indique avec les jauges de votre abonnement.
+Quand WxClaude est prêt à recevoir des messages, il l'indique avec les jauges de votre abonnement et l'heure où la limite de 5 heures se réinitialise, par exemple `Prêt, jauge à 9 %, se réinitialise à 13:40`. Le détail de toutes les jauges est dans Outils > Jauge d'utilisation (Ctrl+Maj+U).
 
 ### Annonces
 

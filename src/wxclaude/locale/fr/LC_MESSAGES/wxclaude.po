@@ -2163,3 +2163,6 @@ msgstr "Le serveur s'est arrêté aussitôt (code de sortie {code}). Vérifiez s
 
 msgid "The server did not answer in time: it was stopped."
 msgstr "Le serveur n'a pas répondu à temps : il a été arrêté."
+
+msgid "{ready}, {reset}"
+msgstr "{ready}, {reset}"

@@ -124,7 +124,7 @@ The status bar has three zones. It does not take the focus: use the command of y
 - The position: `Message 3 of 8` gives the message where the cursor is among yours. It is empty if there are none.
 - The step: `Step 2 of 5: subject` gives the task of Claude's list that it has just started. It is empty if there is none and when WxClaude waits for your message.
 - The message: the last announcement.
-When WxClaude is ready to receive messages, it says so with the gauges of your subscription.
+When WxClaude is ready to receive messages, it says so with the gauges of your subscription and the time the 5-hour limit resets, for example `Ready, gauge at 9 %, resets at 13:40`. The details of all the gauges are in Tools > Usage gauge (Ctrl+Shift+U).
 
 ### Announcements
 

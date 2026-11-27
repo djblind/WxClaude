@@ -50,6 +50,12 @@ never kept for a later return). Three limits keep the rule simple:
 - a window **blocked by a dialog** is not an Alt+Tab: nothing is remembered, rule A gives the focus back;
 - when the focus was not in the window, or the window is closing, nothing is done.
 
+Then, at every return to the foreground (Alt+Tab, a dialog that closes), the control that has the focus
+is announced with `NotifyWinEvent(EVENT_OBJECT_FOCUS, hwnd, OBJID_CLIENT, CHILDID_SELF)`, even when the
+focus did not move. Windows sends that event only when the focus changes: a control that already had
+it, or got it before the window was really in the foreground, left NVDA on the window (keys and arrows
+not read, NVDA+Tab saying the window) until a menu was opened and closed. Found by LavaKri.
+
 ## Particular cases
 
 | Case | Focus | Why |

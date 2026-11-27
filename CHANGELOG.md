@@ -6,6 +6,12 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Fixed: after Alt+Tab or a dialog that closes, NVDA sometimes stayed on the window and read neither the
+  keys typed nor the arrows, until a menu was opened. The control that has the focus is now announced to
+  the screen readers at every return to the foreground, even when the focus did not move (found by
+  LavaKri).
+- Added: the *Ready* line of the status bar also says when the 5-hour gauge resets
+  (`Ready, gauge at 9 %, resets at 13:40`), as long as that is still to come.
 - Added: *Model loading* can be *llama.cpp server (command)*: for a model that only
   `llama-server` reads, WxClaude starts the server with the command of the provider when it does
   not answer (after unloading LM Studio), and stops it before LM Studio loads a model and when it

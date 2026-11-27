@@ -89,9 +89,22 @@ class UsageTracker:
             self.windows[window.name] = window
         self.gauges_at = now
 
-    def ready_line(self) -> str:
-        """ "Ready", with the 5-hour gauge when it is known (``Ready, gauge at 50 %``) and the
-        weekly gauge once it reached its last alert threshold (``..., week at 76 %``)."""
+    def ready_line(self, now: datetime | None = None) -> str:
+        """ "Ready", with the 5-hour gauge when it is known (``Ready, gauge at 50 %``), the weekly
+        gauge once it reached its last alert threshold (``..., week at 76 %``), then when the
+        5-hour gauge resets, if that is still to come (``..., resets at 13:40``)."""
+        line = self._gauges_line()
+        window = self.windows.get("five_hour")
+        moment = now or datetime.now()
+        if window is None or window.utilization is None or window.resets_at is None:
+            return line
+        resets = datetime.fromtimestamp(window.resets_at)
+        if resets <= moment:
+            return line  # past: the next answer brings the new one
+        reset = _at_or_on(resets, moment, _("resets at {when}"), _("resets on {when}"))
+        return _("{ready}, {reset}").format(ready=line, reset=reset)
+
+    def _gauges_line(self) -> str:
         five_hours = _percent(self.windows.get("five_hour"))
         week_window = self.windows.get("seven_day")
         week = _percent(week_window)
