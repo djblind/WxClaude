@@ -10,6 +10,7 @@ from wxclaude.core.claude.events import (
     ApiRetry,
     AssistantText,
     Compacted,
+    ContextSize,
     McpServer,
     PermissionDenied,
     PermissionRequest,
@@ -47,6 +48,14 @@ def _usage(raw: object) -> Usage | None:
         _int(raw.get("cache_creation_input_tokens")) or 0,
         _int(raw.get("cache_read_input_tokens")) or 0,
     )
+
+
+def _context_size(raw: object) -> int:
+    """The tokens an answer read: sent, read from the cache and written to it (0 if unknown)."""
+    usage = _usage(raw)
+    if usage is None:
+        return 0
+    return usage.input_tokens + usage.cache_read_input_tokens + usage.cache_creation_input_tokens
 
 
 def _mcp_servers(raw: object) -> tuple[McpServer, ...]:
@@ -108,6 +117,9 @@ def _assistant(entry: dict[str, object]) -> list[RunEvent]:
     model = message.get("model")
     model_name = model if isinstance(model, str) and model != "<synthetic>" else None
     events: list[RunEvent] = []
+    size = _context_size(message.get("usage"))
+    if size and model_name and entry.get("parent_tool_use_id") is None:  # not a subagent
+        events.append(ContextSize(size))
     content = message.get("content")
     for block in content if isinstance(content, list) else []:
         if not isinstance(block, dict):

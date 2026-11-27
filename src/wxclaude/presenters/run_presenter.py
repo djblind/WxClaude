@@ -15,6 +15,7 @@ from wxclaude.core.claude.events import (
     ApiRetry,
     AssistantText,
     Compacted,
+    ContextSize,
     PermissionExpired,
     PermissionRequest,
     RateLimit,
@@ -51,6 +52,7 @@ from wxclaude.core.security.restricted import restricted_permission_mode
 from wxclaude.core.speech.announcements import DEFAULT_SPEAKER, Announce, AnnouncementCenter
 from wxclaude.i18n import _
 from wxclaude.presenters.gauge_reader import GaugeLinks, GaugeReader
+from wxclaude.presenters.long_conversation_guard import LongConversationGuard
 from wxclaude.presenters.permission_handler import PermissionHandler, PermissionLinks
 from wxclaude.presenters.progress_announcer import ProgressAnnouncer, ProgressLinks
 from wxclaude.presenters.shared import Shared, read_session
@@ -178,6 +180,12 @@ class RunPresenter:
             shared.files,
             ProgressLinks(self._say, lambda: self._speaker, links.conversation_id),
         )
+        self._long = LongConversationGuard(
+            lambda: shared.usage.long,
+            shared.settings,
+            self._say,
+            lambda text: self.start(text, self._turn_agent),
+        )
 
     @property
     def busy(self) -> bool:
@@ -257,6 +265,7 @@ class RunPresenter:
         self._turn_masked = provider is not None and provider.active and provider.scrub
         self._stats.start_message(_credit_provider(provider))
         self._progress.reset()
+        self._long.message_started(text)
         self._permissions.start_message()
         self._links.state_changed()
         self._view.append_message(Message(self._local_id(), Role.USER, text))
@@ -333,8 +342,8 @@ class RunPresenter:
             self._gauges.alert(event.windows)
         elif isinstance(event, SessionInit | TurnResult):
             self._on_turn_data(event)
-        elif isinstance(event, Compacted):
-            self._progress.announce(compaction_progress(event))
+        elif isinstance(event, ContextSize | Compacted):
+            self._on_size(event)
             return
         elif isinstance(event, TurnEnded):
             self._finish_turn(event)
@@ -342,6 +351,12 @@ class RunPresenter:
         progress = progress_for(event)
         if progress is not None:
             self._progress.show(progress)
+
+    def _on_size(self, event: ContextSize | Compacted) -> None:
+        """The size of the conversation, told by an answer or by a compaction (which is said)."""
+        self._long.observe(event)
+        if isinstance(event, Compacted):
+            self._progress.announce(compaction_progress(event))
 
     def _on_question_or_retry(
         self, event: PermissionRequest | PermissionExpired | ApiRetry
@@ -411,6 +426,8 @@ class RunPresenter:
                     name=self._speaker, details=outcome.details
                 )
             )
+        if outcome.outcome is Outcome.DONE:
+            self._long.message_done()  # last: it may send /compact
 
     def _reconcile_with_session_file(self) -> None:
         """The session file of the CLI is the reference: the view shows it."""

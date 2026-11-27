@@ -229,6 +229,17 @@ class Announce(enum.Enum):
             "conversation or a branch."
         ),
     )
+    LONG_CONVERSATION = (
+        None,
+        N_(
+            "Long conversation: {tokens} tokens read again at every message. Open a new "
+            "conversation, or type /compact to replace it by a summary."
+        ),
+    )
+    LONG_CONVERSATION_COMPACTING = (
+        None,
+        N_("Long conversation ({tokens} tokens): automatic compaction, please wait."),
+    )
     MODE_FORCED_MANUAL = (
         MODE_NOT_APPLIED,
         N_(

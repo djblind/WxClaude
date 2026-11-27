@@ -2166,3 +2166,27 @@ msgstr "Le serveur n'a pas répondu à temps : il a été arrêté."
 
 msgid "{ready}, {reset}"
 msgstr "{ready}, {reset}"
+
+msgid "Long conversation: {tokens} tokens read again at every message. Open a new conversation, or type /compact to replace it by a summary."
+msgstr "Conversation longue : {tokens} tokens relus à chaque message. Ouvrez une nouvelle conversation, ou tapez /compact pour la remplacer par un résumé."
+
+msgid "Long conversation ({tokens} tokens): automatic compaction, please wait."
+msgstr "Conversation longue ({tokens} tokens) : compactage automatique, patientez."
+
+msgid "Size of the conversation: {tokens} tokens read again at every message."
+msgstr "Taille de la conversation : {tokens} tokens relus à chaque message."
+
+msgid "Long &conversation"
+msgstr "&Conversation longue"
+
+msgid "&Threshold, in thousands of tokens"
+msgstr "&Seuil, en milliers de tokens"
+
+msgid "Do nothing"
+msgstr "Ne rien faire"
+
+msgid "Warn me"
+msgstr "Me prévenir"
+
+msgid "Compact it automatically"
+msgstr "La compacter automatiquement"

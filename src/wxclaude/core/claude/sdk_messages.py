@@ -35,7 +35,11 @@ def stream_entry(message: Message) -> dict[str, object] | None:
         return {**message.data, "type": "system", "subtype": message.subtype}
     if isinstance(message, AssistantMessage):
         content = [block for block in map(_assistant_block, message.content) if block]
-        return {"type": "assistant", "message": {"model": message.model, "content": content}}
+        return {
+            "type": "assistant",
+            "parent_tool_use_id": message.parent_tool_use_id,
+            "message": {"model": message.model, "content": content, "usage": message.usage},
+        }
     if isinstance(message, UserMessage):
         blocks = message.content if isinstance(message.content, list) else []
         results = [

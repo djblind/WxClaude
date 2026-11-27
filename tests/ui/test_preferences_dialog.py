@@ -274,3 +274,24 @@ def test_the_state_button_shows_the_state_of_claude_and_gives_it_the_focus(
     finally:
         dialog.Destroy()
         wx.SafeYield()
+
+
+def test_a_long_conversation_is_warned_by_default_and_the_choice_is_applied(
+    dialog: PreferencesDialog, settings: Settings
+) -> None:
+    page = dialog.workspace
+    assert [page.long_choice.GetString(index) for index in range(3)] == [
+        "Do nothing",
+        "Warn me",
+        "Compact it automatically",
+    ]
+    assert page.long_choice.GetSelection() == 1
+    assert page.threshold.GetValue() == 100
+    page.long_choice.SetSelection(0)
+    page._update_threshold()
+    assert not page.threshold.IsEnabled()
+    page.long_choice.SetSelection(2)
+    page._update_threshold()
+    page.threshold.SetValue(200)
+    dialog.apply(settings)
+    assert (settings.long_conversation, settings.long_conversation_thousands) == ("compact", 200)

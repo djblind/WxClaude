@@ -6,6 +6,10 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: WxClaude watches the size of the conversation, which Claude reads again at every message.
+  Over a threshold (100 000 tokens by default), it warns once, or compacts the conversation by itself
+  (`/compact`), as chosen in the Preferences, page Workspace, *Long conversation*. The Statistics
+  dialog gives the size.
 - Fixed: after Alt+Tab or a dialog that closes, NVDA sometimes stayed on the window and read neither the
   keys typed nor the arrows, until a menu was opened. The control that has the focus is now announced to
   the screen readers at every return to the foreground, even when the focus did not move (found by

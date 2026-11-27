@@ -312,6 +312,19 @@ is displayed, titles included).
   reduced to 76351. Claude may have lost details; consider a new conversation or a branch." Always
   said as a message (not a category: it is information, not progress). Not yet written in the
   conversation itself.
+- **Long conversation**: Claude reads the whole conversation again for every message, so a long
+  conversation spends most of the subscription on reading it again (measured with diagrun on
+  2026-11-27: 74 % of the use, half of it beyond 100 000 tokens). The size is the one of the last
+  answer of the main conversation, not of a subagent (`usage` of the `assistant` lines: tokens sent,
+  read from the cache and written to it; `core/claude/long_conversation.py`); the Statistics dialog
+  gives it ("Size of the conversation: 123456 tokens read again at every message."). When a message
+  ends well with the conversation over the threshold of the Preferences (page Workspace), *Warn me*
+  says once, until a compaction brings it under the threshold: "Long conversation: 150000 tokens read
+  again at every message. Open a new conversation, or type /compact to replace it by a summary."
+  *Compact it automatically* says "Long conversation (150000 tokens): automatic compaction, please
+  wait." and sends `/compact` with the agent of the message; the compaction is then said as above.
+  A message `/compact` (sent by the user or by WxClaude) never leads to another one, so a compaction
+  that fails is not sent again in a loop. Always said as a message.
 - **A permission mode that was not applied**: the `system` / `init` line gives the mode the CLI really
   uses (`default` for our `manual`). When it is not the one sent for the message, WxClaude says so,
   category "Permission mode not applied" (nothing, a message, default, or a dialog box). With the key
@@ -470,7 +483,9 @@ Claude are then offered. A provider that was deleted shows as Claude. See `provi
   was typed, the key included.
 - **Workspace**: hide the system messages (checked by default): the noise the CLI writes in
   a session, such as the answer "No response requested." or the summary of a compaction, is not displayed; change the tools only
-  in the local file, which is not versioned (unchecked by default, see Workspace settings).
+  in the local file, which is not versioned (unchecked by default, see Workspace settings); *Long
+  conversation* (*Do nothing*, *Warn me*, the default, *Compact it automatically*) and its *Threshold,
+  in thousands of tokens* (20 to 1000, default 100; greyed with *Do nothing*), see "Long conversation".
 - **Agent**: list of the two agents, their fields (the provider first), the check box *Refuse the requests of Claude to
   leave the Plan mode* (checked by default) and the read-only field that gives the implication of
   each permission level, the cache notice and, last, a paragraph that explains the check box (a

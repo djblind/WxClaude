@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from wxclaude.core.claude.events import RateLimit, RateWindow, TurnResult
+from wxclaude.core.claude.long_conversation import LongConversationWatch
 from wxclaude.core.conversation.messages import Usage
 from wxclaude.core.numbers import format_tokens
 from wxclaude.i18n import N_, _
@@ -77,6 +78,8 @@ class UsageTracker:
     conversation_usage: Usage = field(default_factory=Usage)
     conversation_cost: float = 0.0
     conversation_turns: int = 0  # messages sent since the conversation was opened here
+    #: The size of the current conversation, and whether it grew too long.
+    long: LongConversationWatch = field(default_factory=LongConversationWatch)
 
     def record_rate_limit(self, event: RateLimit, now: datetime) -> None:
         """Keep the gauges of ``event`` (a window not named in it keeps its last value)."""
@@ -156,6 +159,7 @@ class UsageTracker:
         self.conversation_usage = Usage()
         self.conversation_cost = 0.0
         self.conversation_turns = 0
+        self.long.start_conversation()
 
     def statistics_lines(self) -> list[str]:
         """The spending of the last message and of the conversation, one fact per line."""
@@ -194,7 +198,15 @@ class UsageTracker:
     def _conversation_lines(self) -> list[str]:
         if not self.conversation_turns:
             return []
+        size = []
+        if self.long.tokens is not None:
+            size = [
+                _("Size of the conversation: {tokens} tokens read again at every message.").format(
+                    tokens=format_tokens(self.long.tokens)
+                )
+            ]
         return [
+            *size,
             _("Conversation since it was opened here, tokens: {tokens}.").format(
                 tokens=_tokens(self.conversation_usage)
             ),

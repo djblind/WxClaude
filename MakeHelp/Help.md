@@ -67,6 +67,18 @@ A conversation always belongs to a workspace. Opening a workspace loads its reme
 - Conversation > Modify the agent changes the agent of the current conversation.
 Changing the model loses the prompt cache of the conversation. Changing the effort or the permission mode does not.
 
+#### Long conversation
+
+Claude reads the whole conversation again at every message. The longer it is, the more each message uses your quota, even a short question. A first message already reads about 50,000 tokens: the instructions and the tools of Claude Code.
+
+WxClaude measures the size of the conversation after each answer. The Statistics dialog gives it. When it goes over a threshold, WxClaude does what the setting Preferences > Workspace > Long conversation says:
+
+- Do nothing.
+- Warn me (the default): WxClaude says it once. Then open a new conversation, or type /compact to replace the conversation by a summary.
+- Compact it automatically: WxClaude sends /compact by itself. Claude keeps a summary and may lose details.
+
+The threshold is set in thousands of tokens, from 20 to 1000. It is 100 by default.
+
 ### Agents
 
 An agent is a set of characteristics, specific to a provider.

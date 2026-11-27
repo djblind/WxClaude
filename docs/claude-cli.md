@@ -167,6 +167,13 @@ One JSON object per line:
   `compact_metadata`: `trigger` (`manual` or `auto`), `pre_tokens`, `post_tokens`, `duration_ms`,
   `cumulative_dropped_tokens` and the identifiers of the messages kept. In the stream the keys are in
   snake case; the session file has them in camel case (`compactMetadata`).
+- `assistant` lines carry `parent_tool_use_id` at the top (`null` in the main conversation, the id of
+  the `Agent` tool in a subagent) and `message.usage` (`input_tokens`, `cache_creation_input_tokens`,
+  `cache_read_input_tokens`, `output_tokens`...): checked with haiku, CLI 2.1.321, 2026-11-27. The sum
+  of the first three is what the answer read, that is the size of the conversation. A first message
+  "Dis juste bonjour." already reads 48834 tokens (2 sent, 18758 written to the cache, 30074 read from
+  it): the instructions and the tools of the CLI. The Agent SDK gives the same in
+  `AssistantMessage.usage` and `parent_tool_use_id` (`sdk_messages.py`).
 - `system` / `init` gives the mode the CLI really uses (measured with haiku, 2026-11-11, no provider):
   asked `manual` gives `default`; `acceptEdits`, `plan` and `dontAsk` keep their name; **`auto` gives
   `default`** (the mode is not applied, even with Claude).

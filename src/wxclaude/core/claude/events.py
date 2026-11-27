@@ -181,6 +181,14 @@ class Compacted:
 
 
 @dataclass(frozen=True, slots=True)
+class ContextSize:
+    """How much an answer of the main conversation read (``usage`` of an ``assistant`` line): the
+    tokens sent plus the ones read from and written to the cache, that is the whole conversation."""
+
+    tokens: int
+
+
+@dataclass(frozen=True, slots=True)
 class ModelLoading:
     """WxClaude prepares the local server before sending the message (``model_loading``):
     ``action`` is ``unload`` or ``load``, ``models`` the models it is about."""
@@ -209,6 +217,7 @@ RunEvent = (
     | TurnResult
     | ApiRetry
     | Compacted
+    | ContextSize
     | TurnEnded
     | GaugesRead
     | ModelLoading

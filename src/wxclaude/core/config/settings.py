@@ -5,6 +5,12 @@ from pathlib import Path
 
 from platformdirs import user_config_dir
 
+from wxclaude.core.claude.long_conversation import CHOICES as LONG_CHOICES
+from wxclaude.core.claude.long_conversation import (
+    DEFAULT_CHOICE,
+    DEFAULT_THRESHOLD_THOUSANDS,
+    THRESHOLD_THOUSANDS,
+)
 from wxclaude.core.claude.permission_channel import CHANNEL_KINDS, STDIO
 from wxclaude.core.config.agents import DEFAULT_AGENT, Agent
 from wxclaude.core.config.jsonstore import read_json, write_json
@@ -105,6 +111,8 @@ class Settings:
     hook_timeout_minutes: int = DEFAULT_HOOK_TIMEOUT_MINUTES  # the CLI's wait, hook channel
     relay_idle_minutes: int = DEFAULT_RELAY_IDLE_MINUTES  # no interface: set in the file
     relay_timeout_seconds: int = DEFAULT_RELAY_TIMEOUT_SECONDS  # no interface: set in the file
+    long_conversation: str = DEFAULT_CHOICE  # off, warn or compact
+    long_conversation_thousands: int = DEFAULT_THRESHOLD_THOUSANDS
     last_workspace: str = ""
     conversation_counter: int = 1  # the number of the next "Conversation x" proposed
     store: Path | None = None
@@ -197,6 +205,16 @@ class Settings:
         if isinstance(output, str) and output_named(output) is not None:
             self.screen_reader_output = output
         self._apply_key_transmission(data)
+        self._apply_long_conversation(data)
+
+    def _apply_long_conversation(self, data: dict[str, object]) -> None:
+        """What is done with a long conversation, and from how many thousands of tokens."""
+        choice = data.get("long_conversation")
+        if isinstance(choice, str) and choice in LONG_CHOICES:
+            self.long_conversation = choice
+        thousands = _whole_number(data.get("long_conversation_thousands"), THRESHOLD_THOUSANDS)
+        if thousands is not None:
+            self.long_conversation_thousands = thousands
 
     def _apply_key_transmission(self, data: dict[str, object]) -> None:
         """The way the key reaches the CLI; a file from before the choice has the old yes or no
@@ -277,6 +295,8 @@ class Settings:
             "hook_timeout_minutes": self.hook_timeout_minutes,
             "relay_idle_minutes": self.relay_idle_minutes,
             "relay_timeout_seconds": self.relay_timeout_seconds,
+            "long_conversation": self.long_conversation,
+            "long_conversation_thousands": self.long_conversation_thousands,
             "last_workspace": self.last_workspace,
             "conversation_counter": self.conversation_counter,
         }

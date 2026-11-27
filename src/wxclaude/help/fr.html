@@ -59,6 +59,15 @@ Pour retrouver un fonctionnement normal, il suffira d'approuver le dossier dans 
 <li>Conversation &gt; Modifier l'agent change l'agent de la conversation courante.
 Changer de modèle fait perdre le cache de l'invite de la conversation. Changer l'effort ou le mode de permission ne le fait pas.</li>
 </ul>
+<h4>Conversation longue</h4>
+<p>Claude relit toute la conversation à chaque message. Plus elle est longue, plus chaque message consomme votre quota, même une petite question. Un premier message relit déjà environ 50 000 tokens : les consignes et les outils de Claude Code.</p>
+<p>WxClaude mesure la taille de la conversation après chaque réponse. La boîte Statistiques la donne. Quand elle dépasse un seuil, WxClaude agit selon le réglage Préférences &gt; Espace de travail &gt; Conversation longue :</p>
+<ul>
+<li>Ne rien faire.</li>
+<li>Me prévenir (par défaut) : WxClaude le dit une fois. Ouvrez alors une nouvelle conversation, ou tapez /compact pour remplacer la conversation par un résumé.</li>
+<li>La compacter automatiquement : WxClaude envoie /compact tout seul. Claude garde un résumé et peut perdre des détails.</li>
+</ul>
+<p>Le seuil se règle en milliers de tokens, de 20 à 1000. Il vaut 100 par défaut.</p>
 <h3>Agents</h3>
 <p>Un agent est un ensemble de caractéristiques, propre à un fournisseur.
 Pour WxClaude, il se limite à un modèle, un effort et un mode de permission.</p>

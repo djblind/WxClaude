@@ -232,3 +232,16 @@ def test_ready_says_when_the_gauge_of_the_five_hours_resets() -> None:
     tracker.record_rate_limit(_rate(RateWindow("five_hour", 0.09, soon)), now)
     later = datetime(2026, 11, 26, 14, 0)
     assert tracker.ready_line(later) == "Ready, gauge at 9 %"  # past: not said
+
+
+def test_the_size_of_the_conversation_is_reported_once_known() -> None:
+    tracker = UsageTracker()
+    tracker.start_conversation(0.0)
+    tracker.record_result(_result(0.25))
+    assert not any(line.startswith("Size") for line in tracker.statistics_lines())
+    tracker.long.record(123456)
+    assert "Size of the conversation: 123456 tokens read again at every message." in (
+        tracker.statistics_lines()
+    )
+    tracker.start_conversation(0.0)
+    assert tracker.long.tokens is None

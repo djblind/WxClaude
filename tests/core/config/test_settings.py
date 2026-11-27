@@ -365,3 +365,29 @@ def test_the_limits_of_the_relay_settings_are_accepted(tmp_path: Path) -> None:
     store.write_text('{"relay_idle_minutes": 1, "relay_timeout_seconds": 3600}', encoding="utf-8")
     loaded = Settings.load(store)
     assert (loaded.relay_idle_minutes, loaded.relay_timeout_seconds) == (1, 3600)
+
+
+def test_a_long_conversation_is_warned_from_100_thousand_tokens_and_round_trips(
+    tmp_path: Path,
+) -> None:
+    store = tmp_path / "settings.json"
+    settings = Settings.load(store)
+    assert (settings.long_conversation, settings.long_conversation_thousands) == ("warn", 100)
+    settings.long_conversation = "compact"
+    settings.long_conversation_thousands = 150
+    settings.save()
+    again = Settings.load(store)
+    assert (again.long_conversation, again.long_conversation_thousands) == ("compact", 150)
+
+
+@pytest.mark.parametrize(("choice", "thousands"), [("never", 5), (1, 1001), (None, True)])
+def test_an_invalid_long_conversation_setting_is_ignored(
+    tmp_path: Path, choice: object, thousands: object
+) -> None:
+    store = tmp_path / "settings.json"
+    store.write_text(
+        json.dumps({"long_conversation": choice, "long_conversation_thousands": thousands}),
+        encoding="utf-8",
+    )
+    loaded = Settings.load(store)
+    assert (loaded.long_conversation, loaded.long_conversation_thousands) == ("warn", 100)

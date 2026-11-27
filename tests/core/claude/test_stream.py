@@ -6,6 +6,7 @@ from wxclaude.core.claude.events import (
     ApiRetry,
     AssistantText,
     Compacted,
+    ContextSize,
     McpServer,
     PermissionDenied,
     RateLimit,
@@ -220,3 +221,30 @@ def test_lines_that_are_not_json_objects_raise() -> None:
         parse_stream_line("hello")
     with pytest.raises(StreamParseError):
         parse_stream_line("[1, 2]")
+
+
+def _answer(
+    usage: dict[str, int], parent: str | None = None, model: str = "claude-x"
+) -> dict[str, object]:
+    return {
+        "type": "assistant",
+        "parent_tool_use_id": parent,
+        "message": {"model": model, "content": [], "usage": usage},
+    }
+
+
+def test_an_answer_tells_the_size_of_the_conversation() -> None:
+    usage = {
+        "input_tokens": 3,
+        "cache_read_input_tokens": 120000,
+        "cache_creation_input_tokens": 500,
+        "output_tokens": 40,
+    }
+    assert _parse(_answer(usage)) == [ContextSize(120503)]
+
+
+def test_the_size_is_not_told_by_a_subagent_a_synthetic_answer_or_an_empty_usage() -> None:
+    usage = {"input_tokens": 10, "cache_read_input_tokens": 90000}
+    assert _parse(_answer(usage, parent="toolu_1")) == []
+    assert _parse(_answer(usage, model="<synthetic>")) == []
+    assert _parse(_answer({"input_tokens": 0, "output_tokens": 0})) == []

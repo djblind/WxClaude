@@ -67,6 +67,18 @@ Une conversation appartient toujours à un espace de travail. Ouvrir un espace d
 - Conversation > Modifier l'agent change l'agent de la conversation courante.
 Changer de modèle fait perdre le cache de l'invite de la conversation. Changer l'effort ou le mode de permission ne le fait pas.
 
+#### Conversation longue
+
+Claude relit toute la conversation à chaque message. Plus elle est longue, plus chaque message consomme votre quota, même une petite question. Un premier message relit déjà environ 50 000 tokens : les consignes et les outils de Claude Code.
+
+WxClaude mesure la taille de la conversation après chaque réponse. La boîte Statistiques la donne. Quand elle dépasse un seuil, WxClaude agit selon le réglage Préférences > Espace de travail > Conversation longue :
+
+- Ne rien faire.
+- Me prévenir (par défaut) : WxClaude le dit une fois. Ouvrez alors une nouvelle conversation, ou tapez /compact pour remplacer la conversation par un résumé.
+- La compacter automatiquement : WxClaude envoie /compact tout seul. Claude garde un résumé et peut perdre des détails.
+
+Le seuil se règle en milliers de tokens, de 20 à 1000. Il vaut 100 par défaut.
+
 ### Agents
 
 Un agent est un ensemble de caractéristiques, propre à un fournisseur.

@@ -59,6 +59,15 @@ To go back to normal operation, you only have to approve the folder in the works
 <li>Conversation &gt; Modify the agent changes the agent of the current conversation.
 Changing the model loses the prompt cache of the conversation. Changing the effort or the permission mode does not.</li>
 </ul>
+<h4>Long conversation</h4>
+<p>Claude reads the whole conversation again at every message. The longer it is, the more each message uses your quota, even a short question. A first message already reads about 50,000 tokens: the instructions and the tools of Claude Code.</p>
+<p>WxClaude measures the size of the conversation after each answer. The Statistics dialog gives it. When it goes over a threshold, WxClaude does what the setting Preferences &gt; Workspace &gt; Long conversation says:</p>
+<ul>
+<li>Do nothing.</li>
+<li>Warn me (the default): WxClaude says it once. Then open a new conversation, or type /compact to replace the conversation by a summary.</li>
+<li>Compact it automatically: WxClaude sends /compact by itself. Claude keeps a summary and may lose details.</li>
+</ul>
+<p>The threshold is set in thousands of tokens, from 20 to 1000. It is 100 by default.</p>
 <h3>Agents</h3>
 <p>An agent is a set of characteristics, specific to a provider.
 For WxClaude, it is limited to a model, an effort and a permission mode.</p>

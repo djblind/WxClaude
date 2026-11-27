@@ -93,7 +93,8 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `env_vars.py` | The `env` key of those files: the described variables (`data/env_vars.txt`) and those a file holds, set / remove in memory, the variables of the provider never offered. |
 | `permissions.py` | The answer to a permission question (`Decision`, `Choice`) and the text that describes a request. |
 | `progress.py` | What is said while a turn runs, and how it ended (the notice `unrecognized_model` of the CLI is not taken for the cause of a failure). |
-| `usage.py` | `UsageTracker`: subscription gauges (`gauge_lines`) and tokens / cost spent (`statistics_lines`), as lines of the dialogs. |
+| `usage.py` | `UsageTracker`: subscription gauges (`gauge_lines`) and tokens / cost spent (`statistics_lines`), as lines of the dialogs, and the size of the conversation (`long`). |
+| `long_conversation.py` | `LongConversationWatch`: the size of the conversation and what to do once a message is over (nothing, warn once, compact), by the settings. |
 | `usage_text.py` | `parse_usage`: the text answered by `/usage` read as the 5-hour and weekly gauges (a text not understood gives none). |
 | `gauge_schedule.py` | `GaugeSchedule`: when the gauges are read again with `/usage` (unknown, or a reset time is past) and how long to wait after a failure. |
 | `tasks.py` | The tasks Claude wrote for a session (`<config>/tasks/<id>/*.json`), read only. |
@@ -189,6 +190,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `login_presenter.py` | `LoginPresenter`: the sign-in to Claude Code (start with an optional e-mail address, cancel, close; the state read again at the end); `LoginView` is what it asks of the dialog. |
 | `run_presenter.py` | `RunPresenter`: a message sent to Claude (start, events, permission questions, progress, steps, end, interrupt; `stop` when the window closes and `claude_path` give the window what it needs of the runner) and the reading of the gauges (`refresh_gauges_if_due`, handled like a message: busy, silent), linked to the window by `RunLinks`; `RunView` is what it asks of the interface. |
 | `permission_handler.py` | `PermissionHandler`: the questions Claude asks during a message (permission to use a tool, structured questions, questions that expired, rules allowed for the message); `RunPresenter` owns it and hands the events to it. |
+| `long_conversation_guard.py` | `LongConversationGuard`: says that the conversation is long, or sends `/compact`, once a message ended well (never after a `/compact`). `RunPresenter` owns it. |
 | `gauge_reader.py` | `GaugeReader`: the reading of the gauges with `/usage` (when they are due, silent, handled like a message) and the announcement of the gauges that reach their alert. `RunPresenter` owns it; its `busy` also covers a reading. |
 | `provider_variables_editor.py` | `ProviderVariablesEditor`: the list *Variable* of the form of a provider (the four models, then the variables of the CLI it can set), the value of each line, its explanation and the provider's `tiers` and `env` it gives back. |
 | `conversation_navigator.py` | `ConversationNavigator`: the jumps of the conversation (headings, tables, lists, items, links): where the caret goes and what is said on arriving or when there is nothing further. The view gives it the text, the caret, a way to move it and `say`. |

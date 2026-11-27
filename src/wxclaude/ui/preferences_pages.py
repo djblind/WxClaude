@@ -9,6 +9,7 @@ from pathlib import Path
 
 import wx
 
+from wxclaude.core.claude import long_conversation
 from wxclaude.core.claude.permission_channel import CHANNEL_KINDS, HOOK, STDIO
 from wxclaude.core.claude.status import describe_status, read_status
 from wxclaude.core.config.providers import ProviderStore
@@ -24,6 +25,12 @@ from wxclaude.ui.fields import read_only_field
 _LANGUAGE_NAMES = {"fr": "Français", "en": "English"}
 # Names of the ways Claude's permission questions reach WxClaude (message ids).
 _CHANNEL_NAMES = {STDIO: N_("Stdio protocol"), HOOK: N_("HTTP hook")}
+# What is done with a long conversation (message ids).
+_LONG_NAMES = {
+    long_conversation.OFF: N_("Do nothing"),
+    long_conversation.WARN: N_("Warn me"),
+    long_conversation.COMPACT: N_("Compact it automatically"),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,11 +215,45 @@ class WorkspacePage(PreferencesPage):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.hide_system_messages, 0, wx.ALL, 6)
         sizer.Add(self.local_tools_only, 0, wx.ALL, 6)
+        self._add_long_conversation(sizer, settings)
         self.SetSizer(sizer)
+        self._update_threshold()
+
+    def _add_long_conversation(self, sizer: wx.BoxSizer, settings: Settings) -> None:
+        """What is done when the conversation grows long, and from which size."""
+        long_text = _("Long &conversation")
+        long_label = wx.StaticText(self, label=long_text)
+        self.long_choice = wx.Choice(
+            self,
+            choices=[_(_LONG_NAMES[choice]) for choice in long_conversation.CHOICES],
+            name=accessible_name(long_text),
+        )
+        self.long_choice.SetSelection(long_conversation.CHOICES.index(settings.long_conversation))
+        self.long_choice.Bind(wx.EVT_CHOICE, lambda _event: self._update_threshold())
+        threshold_text = _("&Threshold, in thousands of tokens")
+        threshold_label = wx.StaticText(self, label=threshold_text)
+        self.threshold = wx.SpinCtrl(
+            self,
+            min=long_conversation.THRESHOLD_THOUSANDS.start,
+            max=long_conversation.THRESHOLD_THOUSANDS.stop - 1,
+            initial=settings.long_conversation_thousands,
+            name=accessible_name(threshold_text),
+        )
+        sizer.Add(long_label, 0, wx.LEFT | wx.RIGHT | wx.TOP, 6)
+        sizer.Add(self.long_choice, 0, wx.ALL, 6)
+        sizer.Add(threshold_label, 0, wx.LEFT | wx.RIGHT, 6)
+        sizer.Add(self.threshold, 0, wx.ALL, 6)
+
+    def _update_threshold(self) -> None:
+        """The threshold is not used when nothing is done."""
+        chosen = long_conversation.CHOICES[self.long_choice.GetSelection()]
+        self.threshold.Enable(chosen != long_conversation.OFF)
 
     def apply(self, settings: Settings) -> None:
         settings.hide_system_messages = self.hide_system_messages.GetValue()
         settings.local_tools_only = self.local_tools_only.GetValue()
+        settings.long_conversation = long_conversation.CHOICES[self.long_choice.GetSelection()]
+        settings.long_conversation_thousands = self.threshold.GetValue()
 
 
 class AgentPage(PreferencesPage):
