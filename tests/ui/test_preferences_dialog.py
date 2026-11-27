@@ -295,3 +295,23 @@ def test_a_long_conversation_is_warned_by_default_and_the_choice_is_applied(
     page.threshold.SetValue(200)
     dialog.apply(settings)
     assert (settings.long_conversation, settings.long_conversation_thousands) == ("compact", 200)
+
+
+def test_a_new_conversation_is_proposed_after_a_pause_by_default_and_the_choice_is_applied(
+    dialog: PreferencesDialog, settings: Settings
+) -> None:
+    page = dialog.workspace
+    assert page.fresh_choice.GetSelection() == 0
+    assert page.fresh_choice.GetString(0) == "Propose a new conversation"
+    page.fresh_choice.SetSelection(1)
+    dialog.apply(settings)
+    assert settings.fresh_start == "always"
+
+
+def test_the_subagents_of_wxclaude_are_given_by_default_and_can_be_refused(
+    dialog: PreferencesDialog, settings: Settings
+) -> None:
+    assert dialog.workspace.subagents.GetValue()
+    dialog.workspace.subagents.SetValue(False)
+    dialog.apply(settings)
+    assert not settings.wxclaude_subagents

@@ -79,6 +79,18 @@ WxClaude mesure la taille de la conversation après chaque réponse. La boîte S
 
 Le seuil se règle en milliers de tokens, de 20 à 1000. Il vaut 100 par défaut.
 
+#### Reprendre après une pause
+
+Claude garde en mémoire ce qu'il a déjà lu pendant une heure au plus. Reprendre une longue conversation après une pause coûte donc cher : il doit tout relire.
+
+Si vous envoyez un message dans une longue conversation laissée depuis plus d'une heure, WxClaude vous propose de continuer dans une nouvelle conversation. Répondez Oui (c'est le choix par défaut) : la nouvelle conversation, nommée « (suite) », reçoit les derniers échanges de l'ancienne, et Claude reprend le travail directement. Ce résumé est fait par WxClaude et ne coûte aucun token.
+
+Préférences > Espace de travail > Conversation longue après une pause : proposer (par défaut), continuer sans demander (utile quand vous n'êtes pas devant l'ordinateur) ou garder la conversation.
+
+#### Sous-agents moins chers
+
+WxClaude donne à Claude deux aides moins chères : un lecteur sur Haiku, qui lit et cherche sans rien modifier, et un exécutant sur Sonnet, pour le travail répétitif. Claude décide lui-même quand s'en servir ; le travail le plus lourd coûte alors moins de quota. Vous pouvez les retirer dans Préférences > Espace de travail.
+
 ### Agents
 
 Un agent est un ensemble de caractéristiques, propre à un fournisseur.

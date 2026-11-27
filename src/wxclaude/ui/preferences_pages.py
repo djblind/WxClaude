@@ -14,6 +14,7 @@ from wxclaude.core.claude.permission_channel import CHANNEL_KINDS, HOOK, STDIO
 from wxclaude.core.claude.status import describe_status, read_status
 from wxclaude.core.config.providers import ProviderStore
 from wxclaude.core.config.settings import HOOK_TIMEOUT_MINUTES, SUPPORTED_LANGUAGES, Settings
+from wxclaude.core.conversation import handoff
 from wxclaude.core.labels import accessible_name
 from wxclaude.core.speech.screen_reader import available_outputs, default_output, output_named
 from wxclaude.i18n import N_, _
@@ -30,6 +31,12 @@ _LONG_NAMES = {
     long_conversation.OFF: N_("Do nothing"),
     long_conversation.WARN: N_("Warn me"),
     long_conversation.COMPACT: N_("Compact it automatically"),
+}
+# What is done with a long conversation taken up after a pause (message ids).
+_FRESH_NAMES = {
+    handoff.ASK: N_("Propose a new conversation"),
+    handoff.ALWAYS: N_("Go on in a new conversation without asking"),
+    handoff.NEVER: N_("Keep the conversation"),
 }
 
 
@@ -243,6 +250,21 @@ class WorkspacePage(PreferencesPage):
         sizer.Add(self.long_choice, 0, wx.ALL, 6)
         sizer.Add(threshold_label, 0, wx.LEFT | wx.RIGHT, 6)
         sizer.Add(self.threshold, 0, wx.ALL, 6)
+        pause_text = _("Long conversation after a &pause")
+        pause_label = wx.StaticText(self, label=pause_text)
+        self.fresh_choice = wx.Choice(
+            self,
+            choices=[_(_FRESH_NAMES[choice]) for choice in handoff.CHOICES],
+            name=accessible_name(pause_text),
+        )
+        self.fresh_choice.SetSelection(handoff.CHOICES.index(settings.fresh_start))
+        sizer.Add(pause_label, 0, wx.LEFT | wx.RIGHT, 6)
+        sizer.Add(self.fresh_choice, 0, wx.ALL, 6)
+        self.subagents = wx.CheckBox(
+            self, label=_("&Give Claude cheaper subagents (reader on Haiku, worker on Sonnet)")
+        )
+        self.subagents.SetValue(settings.wxclaude_subagents)
+        sizer.Add(self.subagents, 0, wx.ALL, 6)
 
     def _update_threshold(self) -> None:
         """The threshold is not used when nothing is done."""
@@ -254,6 +276,8 @@ class WorkspacePage(PreferencesPage):
         settings.local_tools_only = self.local_tools_only.GetValue()
         settings.long_conversation = long_conversation.CHOICES[self.long_choice.GetSelection()]
         settings.long_conversation_thousands = self.threshold.GetValue()
+        settings.fresh_start = handoff.CHOICES[self.fresh_choice.GetSelection()]
+        settings.wxclaude_subagents = self.subagents.GetValue()
 
 
 class AgentPage(PreferencesPage):

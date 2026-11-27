@@ -49,6 +49,7 @@ from wxclaude.core.claude.process_input import ProcessInput
 from wxclaude.core.claude.questions import answered_input
 from wxclaude.core.claude.sdk_run import SdkRun, sdk_available
 from wxclaude.core.claude.stream import parse_stream_line
+from wxclaude.core.claude.subagents import subagents_argument
 from wxclaude.core.claude.usage_text import parse_usage
 from wxclaude.core.config.agents import Agent
 from wxclaude.core.config.model_loading import LoadingMethod, loading_method
@@ -84,6 +85,7 @@ class RunRequest:
     ``provider`` is the provider to launch with and its key (``core/claude/launch.py``); without
     one, or with Claude, the CLI is launched as it always was.
     ``max_turns`` limits the turns of the message (``--max-turns``); 0 is no limit.
+    ``subagents`` are the subagents WxClaude gives Claude (``core/claude/subagents.py``).
     """
 
     prompt: str
@@ -96,6 +98,7 @@ class RunRequest:
     restricted: bool = False
     provider: ProviderLaunch | None = None
     max_turns: int = 0
+    subagents: dict[str, dict[str, object]] = field(default_factory=dict)
 
 
 def build_arguments(request: RunRequest, channel: PermissionChannel) -> list[str]:
@@ -132,6 +135,7 @@ def build_arguments(request: RunRequest, channel: PermissionChannel) -> list[str
         "--permission-mode",
         mode,
         *(["--max-turns", str(request.max_turns)] if request.max_turns > 0 else []),
+        *subagents_argument(request.subagents),
         *_session_arguments(request),
         *(["--name", request.name] if request.name and not request.resume else []),
     ]

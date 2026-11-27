@@ -174,6 +174,12 @@ class Feedback:
                 dialog.SetYesNoLabels(yes_label, no_label)
             return bool(self.modal(dialog) == wx.ID_YES)
 
+    def propose(self, title: str, message: str) -> bool:
+        """Ask a Yes / No question, Yes by default (what is advised); True for Yes."""
+        style = wx.YES_NO | wx.YES_DEFAULT | wx.ICON_QUESTION
+        with wx.MessageDialog(self._frame, message, title, style) as dialog:
+            return bool(self.modal(dialog) == wx.ID_YES)
+
     def show_info(self, message: str) -> None:
         self.message_box(message, _("Information"), wx.ICON_INFORMATION)
 

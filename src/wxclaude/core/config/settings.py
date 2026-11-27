@@ -21,6 +21,8 @@ from wxclaude.core.config.shortcuts import (
     check_shortcut,
     normalize_shortcut,
 )
+from wxclaude.core.conversation.handoff import CHOICES as FRESH_START_CHOICES
+from wxclaude.core.conversation.handoff import DEFAULT_CHOICE as FRESH_START_DEFAULT
 from wxclaude.core.errors import JsonStoreError, SettingsError
 from wxclaude.core.speech.announcements import CATEGORIES, Category, Destination
 from wxclaude.core.speech.screen_reader import default_output, output_named
@@ -35,6 +37,7 @@ _FLAG_KEYS = (
     "local_tools_only",
     "claude_auto_search",
     "refuse_plan_mode_exit",
+    "wxclaude_subagents",
 )
 _TEXT_KEYS = ("claude_path", "last_workspace")
 SUPPORTED_LANGUAGES = ("fr", "en")
@@ -113,6 +116,8 @@ class Settings:
     relay_timeout_seconds: int = DEFAULT_RELAY_TIMEOUT_SECONDS  # no interface: set in the file
     long_conversation: str = DEFAULT_CHOICE  # off, warn or compact
     long_conversation_thousands: int = DEFAULT_THRESHOLD_THOUSANDS
+    fresh_start: str = FRESH_START_DEFAULT  # after a pause: ask, always or never
+    wxclaude_subagents: bool = True  # give Claude the subagents lecteur and executant
     last_workspace: str = ""
     conversation_counter: int = 1  # the number of the next "Conversation x" proposed
     store: Path | None = None
@@ -215,6 +220,9 @@ class Settings:
         thousands = _whole_number(data.get("long_conversation_thousands"), THRESHOLD_THOUSANDS)
         if thousands is not None:
             self.long_conversation_thousands = thousands
+        fresh = data.get("fresh_start")
+        if isinstance(fresh, str) and fresh in FRESH_START_CHOICES:
+            self.fresh_start = fresh
 
     def _apply_key_transmission(self, data: dict[str, object]) -> None:
         """The way the key reaches the CLI; a file from before the choice has the old yes or no
@@ -297,6 +305,8 @@ class Settings:
             "relay_timeout_seconds": self.relay_timeout_seconds,
             "long_conversation": self.long_conversation,
             "long_conversation_thousands": self.long_conversation_thousands,
+            "fresh_start": self.fresh_start,
+            "wxclaude_subagents": self.wxclaude_subagents,
             "last_workspace": self.last_workspace,
             "conversation_counter": self.conversation_counter,
         }

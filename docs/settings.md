@@ -26,6 +26,8 @@ invalid values fall back to their default; unknown keys are ignored.
 | `local_tools_only` | The workspace settings only modify the personal file `.claude/settings.local.json`, never the versioned `settings.json` | `false` |
 | `long_conversation` | What is done once a message ends with the conversation over the threshold: `off`, `warn` (said once) or `compact` (`/compact` is sent); see `interface.md`, "Long conversation" | `warn` |
 | `long_conversation_thousands` | The threshold of a long conversation, in thousands of tokens, 20 to 1000 | `100` |
+| `fresh_start` | A long conversation taken up more than an hour after its last answer: `ask` (propose a new conversation that gets its last exchanges), `always` (do so without asking) or `never`; see `interface.md`, "Fresh start after a pause" | `ask` |
+| `wxclaude_subagents` | Give Claude the subagents `lecteur` (Haiku) and `executant` (Sonnet) with every message; see `interface.md`, "Subagents of WxClaude" | `true` |
 | `relay_idle_minutes` | The relay of the key (transmission *Relayed*) stops after that many minutes without a request, 1 to 120. No interface: set in the file, read when WxClaude starts | `10` |
 | `relay_timeout_seconds` | How long the relay waits for the provider, 30 to 3600. No interface: set in the file, read when WxClaude starts | `600` |
 | `key_transmission` | How the key of a provider other than Claude reaches the CLI, choice *API key transmission* of the page Providers: `masked` (the tools of Claude do not see it, the CLI forces the manual permission mode), `shared` or `relayed` (a local relay holds the key). A file from before it has the yes or no `scrub_credentials`, read as `masked` or `shared` | `masked` |

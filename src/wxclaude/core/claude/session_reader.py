@@ -31,6 +31,7 @@ class Session:
     total_cost_usd: float | None = None  # what the CLI counted for the whole session
     cost_states: list[CostState] = field(default_factory=list)  # its totals, as the file gives them
     started: str = ""  # the time of the first entry (ISO 8601), empty if there is none
+    ended: str = ""  # the time of the last entry (ISO 8601), empty if there is none
 
     @property
     def last_agent(self) -> Agent:
@@ -111,8 +112,9 @@ class _Builder:
         if isinstance(mode, str):
             self.session.last_permission_mode = mode
         stamp = entry.get("timestamp")
-        if not self.session.started and isinstance(stamp, str):
-            self.session.started = stamp
+        if isinstance(stamp, str):
+            self.session.started = self.session.started or stamp
+            self.session.ended = stamp
 
     def finish(self) -> Session:
         self._attach_pending_to_last_answer()

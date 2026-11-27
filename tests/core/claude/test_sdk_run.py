@@ -31,6 +31,7 @@ from wxclaude.core.claude.events import (
 from wxclaude.core.claude.launch import ProviderLaunch
 from wxclaude.core.claude.runner import ClaudeRunner, RunRequest
 from wxclaude.core.claude.sdk_run import CLIENT_APP, SdkRun, sdk_options
+from wxclaude.core.claude.subagents import SUBAGENTS
 from wxclaude.core.config.agents import Agent
 from wxclaude.core.config.providers import ENGINE_SDK, Provider
 from wxclaude.core.errors import RunnerError
@@ -332,3 +333,11 @@ def test_the_runner_sends_a_provider_of_the_sdk_through_it(
     with pytest.raises(RunnerError):  # one message at a time, whatever the engine
         runner.start(_request(tmp_path), lambda _event: None)
     assert started[0]._cli_path == "C:/claude/claude.exe"
+
+
+def test_the_subagents_of_wxclaude_are_given_to_the_sdk(tmp_path: Path) -> None:
+    assert _options(_request(tmp_path)).agents is None
+    options = _options(_request(tmp_path, subagents=SUBAGENTS))
+    assert options.agents is not None
+    assert options.agents["lecteur"].model == "haiku"
+    assert options.agents["executant"].model == "sonnet"

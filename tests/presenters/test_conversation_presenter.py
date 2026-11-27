@@ -34,6 +34,7 @@ class FakeScreen:
         self.errors: list[str] = []
         self.calls: list[str] = []
         self.confirmed = True  # the answer to a Yes / No question
+        self.proposed = True  # the answer to a question that advises Yes
         self.recycle_works = True
         self.recycled: list[Path] = []
         self.hold = False  # True: the work in the background waits for ``finish_held``
@@ -83,6 +84,10 @@ class FakeScreen:
     def confirm(self, title: str, message: str) -> bool:
         self.calls.append(f"confirm {message}")
         return self.confirmed
+
+    def propose(self, title: str, message: str) -> bool:
+        self.calls.append(f"propose {title}")
+        return self.proposed
 
     def move_to_recycle_bin(self, paths: list[Path]) -> bool:
         if self.recycle_works:

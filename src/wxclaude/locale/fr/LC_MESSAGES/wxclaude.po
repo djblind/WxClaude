@@ -2217,3 +2217,39 @@ msgstr "Sous-agent {agent}"
 
 msgid "Activit&y"
 msgstr "Activi&té"
+
+msgid "[User] {text}"
+msgstr "[Utilisateur] {text}"
+
+msgid "[Claude] {text}"
+msgstr "[Claude] {text}"
+
+msgid "This conversation goes on with the conversation \"{name}\", which had grown too long to be taken up again after a pause. Here are its last exchanges, oldest first:\n\n{exchanges}\n\nIf you need more, the whole old conversation is in {file} (a JSONL session file of Claude Code): read only the part you need. Go on with the work where it was.\n\nNew message of the user:\n{text}"
+msgstr "Cette conversation fait suite à la conversation « {name} », devenue trop longue pour être reprise après une pause. Voici ses derniers échanges, du plus ancien au plus récent :\n\n{exchanges}\n\nS'il te faut plus de détails, toute l'ancienne conversation est dans {file} (un fichier de session JSONL de Claude Code) : lis seulement la partie utile. Reprends le travail là où il en était.\n\nNouveau message de l'utilisateur :\n{text}"
+
+msgid "{name} (continued)"
+msgstr "{name} (suite)"
+
+msgid "Continued conversation"
+msgstr "Conversation reprise"
+
+msgid "Long conversation after a pause"
+msgstr "Conversation longue après une pause"
+
+msgid "This conversation is long and was left more than an hour ago: taking it up again costs much of the quota. Go on in a new conversation, which gets its last exchanges and goes on with the work?"
+msgstr "Cette conversation est longue et a été laissée il y a plus d'une heure : la reprendre coûte beaucoup de quota. Continuer dans une nouvelle conversation, qui reçoit ses derniers échanges et reprend le travail ?"
+
+msgid "Long conversation after a &pause"
+msgstr "Conversation longue après une &pause"
+
+msgid "Propose a new conversation"
+msgstr "Proposer une nouvelle conversation"
+
+msgid "Go on in a new conversation without asking"
+msgstr "Continuer dans une nouvelle conversation sans demander"
+
+msgid "Keep the conversation"
+msgstr "Garder la conversation"
+
+msgid "&Give Claude cheaper subagents (reader on Haiku, worker on Sonnet)"
+msgstr "&Donner à Claude des sous-agents moins chers (lecteur sur Haiku, exécutant sur Sonnet)"

@@ -16,6 +16,7 @@ from wxclaude.core.errors import JsonStoreError
 from wxclaude.core.speech.announcements import Announce
 from wxclaude.i18n import _
 from wxclaude.presenters.conversation_loader import ConversationLoader, LoaderLinks
+from wxclaude.presenters.fresh_start import FreshStart, FreshStartLinks
 from wxclaude.presenters.shared import ConversationState, Shared
 from wxclaude.presenters.workspace_presenter import WorkspacePresenter
 
@@ -79,6 +80,10 @@ class ConversationView(Protocol):
         """Ask a Yes / No question (No by default); True for Yes."""
         ...
 
+    def propose(self, title: str, message: str) -> bool:
+        """Ask a Yes / No question, Yes by default; True for Yes."""
+        ...
+
     def move_to_recycle_bin(self, paths: list[Path]) -> bool:
         """Move ``paths`` to the Recycle Bin; False if one of them could not be moved."""
         ...
@@ -135,6 +140,11 @@ class ConversationPresenter:
             workspaces,
             self._current,
             LoaderLinks(self._set_conversation, self._set_name),
+        )
+        self._fresh = FreshStart(
+            view,
+            shared,
+            FreshStartLinks(lambda: self.conversation_id, lambda: self.name, self.start_new),
         )
 
     @property
@@ -199,6 +209,7 @@ class ConversationPresenter:
         text = text.strip()
         if not text or not self.can_send:
             return
+        text = self._fresh.text_to_send(text)  # a long conversation after a pause: a new one
         if self._links.start(text, self.agent_for(alternative=alternative)):
             self._view.clear_prompt()
             self._view.focus_last_prompt()

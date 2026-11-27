@@ -180,6 +180,11 @@ One JSON object per line:
   call gives `subagent_type` and `description`; a subagent launched in the background answers the
   `Agent` call at once (checked with haiku, CLI 2.1.321, 2026-11-27). `thinking` blocks come without
   their text (`"thinking": ""`, seen in a session of Opus 5.5).
+- `--agents` with a JSON object on the command line (`{"lecteur": {"description", "prompt", "tools",
+  "model": "haiku"}}`) adds subagents for the message; the `Agent` tool then names them in
+  `subagent_type`, and their lines carry their own model (checked with haiku, CLI 2.1.321,
+  2026-11-28). A `CLAUDE.md` of the folder that forbids subagents is followed: Claude did the work
+  alone.
 - `system` / `init` gives the mode the CLI really uses (measured with haiku, 2026-11-11, no provider):
   asked `manual` gives `default`; `acceptEdits`, `plan` and `dontAsk` keep their name; **`auto` gives
   `default`** (the mode is not applied, even with Claude).

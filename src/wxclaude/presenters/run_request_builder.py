@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from wxclaude.core.claude.launch import launch_for
 from wxclaude.core.claude.runner import RunRequest
+from wxclaude.core.claude.subagents import SUBAGENTS
 from wxclaude.core.config.agents import Agent
 from wxclaude.core.security.restricted import restricted_permission_mode
 from wxclaude.presenters.shared import Shared
@@ -60,6 +61,7 @@ class RunRequestBuilder:
             restricted=self.restricted,
             provider=provider,
             max_turns=self._max_turns,
+            subagents=SUBAGENTS if self._settings.wxclaude_subagents else {},
         )
 
     def mode_sent(self, agent: Agent) -> str:

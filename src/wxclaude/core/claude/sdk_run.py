@@ -78,7 +78,10 @@ def sdk_options(
 ) -> ClaudeAgentOptions:
     """The options of the SDK for ``request``: what ``runner.build_arguments`` gives Claude Code,
     and the key of the provider in the environment (never on the command line)."""
-    from claude_agent_sdk import ClaudeAgentOptions  # noqa: PLC0415 (the SDK is optional)
+    from claude_agent_sdk import (  # noqa: PLC0415 (the SDK is optional)
+        AgentDefinition,
+        ClaudeAgentOptions,
+    )
 
     agent, launch = request.agent, request.provider
     if not (agent.model and agent.effort and agent.permission_mode):
@@ -99,6 +102,11 @@ def sdk_options(
         effort=cast(Any, agent.effort) if sends_effort(launch) else None,
         permission_mode=cast(Any, mode),
         max_turns=request.max_turns or None,
+        agents={
+            name: AgentDefinition(**cast(Any, definition))
+            for name, definition in request.subagents.items()
+        }
+        or None,
         cwd=request.cwd,
         cli_path=cli_path,
         settings=json.dumps(settings) if settings else None,

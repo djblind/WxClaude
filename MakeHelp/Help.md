@@ -79,6 +79,18 @@ WxClaude measures the size of the conversation after each answer. The Statistics
 
 The threshold is set in thousands of tokens, from 20 to 1000. It is 100 by default.
 
+#### Taking up after a pause
+
+Claude keeps what it already read for one hour at most. Taking up a long conversation after a pause is therefore expensive: it must read everything again.
+
+If you send a message in a long conversation left for more than an hour, WxClaude proposes to go on in a new conversation. Answer Yes (the default choice): the new conversation, named "(continued)", gets the last exchanges of the old one, and Claude goes on with the work directly. This summary is made by WxClaude and costs no token.
+
+Preferences > Workspace > Long conversation after a pause: propose (the default), go on without asking (useful when you are not at the computer) or keep the conversation.
+
+#### Cheaper subagents
+
+WxClaude gives Claude two cheaper helpers: a reader on Haiku, which reads and searches without changing anything, and a worker on Sonnet, for repetitive work. Claude decides when to use them; the heaviest work then uses less quota. You can remove them in Preferences > Workspace.
+
 ### Agents
 
 An agent is a set of characteristics, specific to a provider.

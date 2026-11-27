@@ -54,3 +54,14 @@ def test_a_trusted_folder_keeps_the_mode_of_the_agent(tmp_path: Path) -> None:
     builder = builder_for(tmp_path, FakeClaudeFiles())
     assert not builder.restricted
     assert builder.mode_sent(AGENT) == "acceptEdits"
+
+
+def test_the_subagents_of_wxclaude_are_given_unless_the_settings_say_no(tmp_path: Path) -> None:
+    builder = builder_for(tmp_path, FakeClaudeFiles())
+    request = builder.build("hello", AGENT)
+    assert request is not None
+    assert set(request.subagents) == {"lecteur", "executant"}
+    builder._settings.wxclaude_subagents = False
+    request = builder.build("hello", AGENT)
+    assert request is not None
+    assert request.subagents == {}

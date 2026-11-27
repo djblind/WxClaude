@@ -391,3 +391,16 @@ def test_an_invalid_long_conversation_setting_is_ignored(
     )
     loaded = Settings.load(store)
     assert (loaded.long_conversation, loaded.long_conversation_thousands) == ("warn", 100)
+
+
+def test_a_fresh_start_after_a_pause_is_proposed_by_default_and_round_trips(
+    tmp_path: Path,
+) -> None:
+    store = tmp_path / "settings.json"
+    settings = Settings.load(store)
+    assert settings.fresh_start == "ask"
+    settings.fresh_start = "never"
+    settings.save()
+    assert Settings.load(store).fresh_start == "never"
+    store.write_text(json.dumps({"fresh_start": "sometimes"}), encoding="utf-8")
+    assert Settings.load(store).fresh_start == "ask"

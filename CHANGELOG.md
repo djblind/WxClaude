@@ -6,6 +6,13 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: a long conversation taken up more than an hour after its last answer (the cache of Claude
+  is gone, so it would cost much) can go on in a new conversation: WxClaude proposes it (or does it
+  without asking, as chosen in the Preferences), gives the new conversation the last exchanges of
+  the old one, and Claude goes on with the work. Making this summary costs no token.
+- Added: WxClaude gives Claude two cheaper subagents with every message: a reader on Haiku, which
+  reads and searches without changing anything, and a worker on Sonnet for repetitive tasks. They
+  can be turned off in the Preferences, page Workspace.
 - Added: an *Activity* field under the prompt shows what Claude does while it answers, one line per
   action: the tools with the file or the command, what Claude writes between two actions, and what
   its subagents do. It costs no token and never takes the focus; it is emptied at each message.

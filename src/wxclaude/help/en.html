@@ -68,6 +68,12 @@ Changing the model loses the prompt cache of the conversation. Changing the effo
 <li>Compact it automatically: WxClaude sends /compact by itself. Claude keeps a summary and may lose details.</li>
 </ul>
 <p>The threshold is set in thousands of tokens, from 20 to 1000. It is 100 by default.</p>
+<h4>Taking up after a pause</h4>
+<p>Claude keeps what it already read for one hour at most. Taking up a long conversation after a pause is therefore expensive: it must read everything again.</p>
+<p>If you send a message in a long conversation left for more than an hour, WxClaude proposes to go on in a new conversation. Answer Yes (the default choice): the new conversation, named &quot;(continued)&quot;, gets the last exchanges of the old one, and Claude goes on with the work directly. This summary is made by WxClaude and costs no token.</p>
+<p>Preferences &gt; Workspace &gt; Long conversation after a pause: propose (the default), go on without asking (useful when you are not at the computer) or keep the conversation.</p>
+<h4>Cheaper subagents</h4>
+<p>WxClaude gives Claude two cheaper helpers: a reader on Haiku, which reads and searches without changing anything, and a worker on Sonnet, for repetitive work. Claude decides when to use them; the heaviest work then uses less quota. You can remove them in Preferences &gt; Workspace.</p>
 <h3>Agents</h3>
 <p>An agent is a set of characteristics, specific to a provider.
 For WxClaude, it is limited to a model, an effort and a permission mode.</p>

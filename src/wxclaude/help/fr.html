@@ -68,6 +68,12 @@ Changer de modèle fait perdre le cache de l'invite de la conversation. Changer 
 <li>La compacter automatiquement : WxClaude envoie /compact tout seul. Claude garde un résumé et peut perdre des détails.</li>
 </ul>
 <p>Le seuil se règle en milliers de tokens, de 20 à 1000. Il vaut 100 par défaut.</p>
+<h4>Reprendre après une pause</h4>
+<p>Claude garde en mémoire ce qu'il a déjà lu pendant une heure au plus. Reprendre une longue conversation après une pause coûte donc cher : il doit tout relire.</p>
+<p>Si vous envoyez un message dans une longue conversation laissée depuis plus d'une heure, WxClaude vous propose de continuer dans une nouvelle conversation. Répondez Oui (c'est le choix par défaut) : la nouvelle conversation, nommée « (suite) », reçoit les derniers échanges de l'ancienne, et Claude reprend le travail directement. Ce résumé est fait par WxClaude et ne coûte aucun token.</p>
+<p>Préférences &gt; Espace de travail &gt; Conversation longue après une pause : proposer (par défaut), continuer sans demander (utile quand vous n'êtes pas devant l'ordinateur) ou garder la conversation.</p>
+<h4>Sous-agents moins chers</h4>
+<p>WxClaude donne à Claude deux aides moins chères : un lecteur sur Haiku, qui lit et cherche sans rien modifier, et un exécutant sur Sonnet, pour le travail répétitif. Claude décide lui-même quand s'en servir ; le travail le plus lourd coûte alors moins de quota. Vous pouvez les retirer dans Préférences &gt; Espace de travail.</p>
 <h3>Agents</h3>
 <p>Un agent est un ensemble de caractéristiques, propre à un fournisseur.
 Pour WxClaude, il se limite à un modèle, un effort et un mode de permission.</p>

@@ -82,6 +82,9 @@ class WxConversationScreen:
     def confirm(self, title: str, message: str) -> bool:
         return self._feedback.confirm(title, message)
 
+    def propose(self, title: str, message: str) -> bool:
+        return self._feedback.propose(title, message)
+
     def move_to_recycle_bin(self, paths: list[Path]) -> bool:
         return desktop.move_to_recycle_bin(paths)
 

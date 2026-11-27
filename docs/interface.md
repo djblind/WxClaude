@@ -338,6 +338,27 @@ is displayed, titles included).
   wait." and sends `/compact` with the agent of the message; the compaction is then said as above.
   A message `/compact` (sent by the user or by WxClaude) never leads to another one, so a compaction
   that fails is not sent again in a loop. Always said as a message.
+- **Fresh start after a pause**: Claude keeps what it read in a cache for one hour at most; a long
+  conversation taken up after that is written to the cache again whole, then read again at every
+  message. So, when a message is sent in a conversation whose last answer read the threshold of *Long
+  conversation* or more, and whose session file ends more than an hour ago (`Session.ended`, the time
+  of its last entry), WxClaude asks "Long conversation after a pause" (Yes by default) as the
+  Preferences say (page Workspace, *Long conversation after a pause*: *Propose a new conversation*,
+  the default; *Go on in a new conversation without asking*; *Keep the conversation*). Yes: a new
+  conversation named "<name> (continued)" becomes the current one (the view is emptied), and its first
+  message is made by WxClaude, without a token spent: the name of the old conversation, its last
+  exchanges, oldest first, up to 40 000 characters (a prompt or an answer keeps its first 6000), the
+  path of the old session file for more, the request to go on with the work, then the message typed.
+  No, or a short or recent conversation: the message goes on in the conversation as before
+  (`core/conversation/handoff.py`, `presenters/fresh_start.py`).
+- **Subagents of WxClaude**: unless the Preferences say no (page Workspace, *Give Claude cheaper
+  subagents*, checked by default), every message gives Claude two subagents (`--agents`, or the
+  `agents` of the Agent SDK; `core/claude/subagents.py`): `lecteur` on Haiku, which reads and searches
+  without changing anything and gives back a short summary (tools Read, Grep, Glob, Bash), and
+  `executant` on Sonnet, for a task that is well defined and repetitive (every tool). Claude decides
+  when to use them; a `CLAUDE.md` that forbids subagents is followed (checked: Claude then works
+  alone). Measured on the translation of FF4 (2026-11-27, subagents of the project on Sonnet): the
+  same work cost a third less than all on Opus, and the main conversation stayed small.
 - **A permission mode that was not applied**: the `system` / `init` line gives the mode the CLI really
   uses (`default` for our `manual`). When it is not the one sent for the message, WxClaude says so,
   category "Permission mode not applied" (nothing, a message, default, or a dialog box). With the key
