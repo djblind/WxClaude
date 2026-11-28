@@ -39,7 +39,7 @@ class LoginDialog(wx.Dialog):
         self._sign_in = wx.Button(self, label=_("&Sign in"))
         self._copy = wx.Button(self, label=_("Copy the &address"))
         self._cancel = wx.Button(self, label=_("&Cancel the sign-in"))
-        close = wx.Button(self, wx.ID_CLOSE)
+        close = wx.Button(self, wx.ID_CLOSE, _("&Close"))
         self._sign_in.SetDefault()
         self._sign_in.Bind(wx.EVT_BUTTON, lambda _event: self._presenter.sign_in(self.email))
         self._copy.Bind(wx.EVT_BUTTON, lambda _event: self._on_copy())

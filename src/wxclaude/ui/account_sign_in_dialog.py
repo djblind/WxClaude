@@ -41,7 +41,7 @@ class AccountSignInDialog(wx.Dialog):
         self._send = wx.Button(self, label=_("&Send the code"))
         self._open = wx.Button(self, label=_("Open the page in the &browser"))
         self._copy = wx.Button(self, label=_("Copy the &address"))
-        close = wx.Button(self, wx.ID_CLOSE)
+        close = wx.Button(self, wx.ID_CLOSE, _("&Close"))
         self._send.Bind(wx.EVT_BUTTON, lambda _event: self._presenter.send_code(self._code_text))
         self._open.Bind(wx.EVT_BUTTON, lambda _event: self._on_open())
         self._copy.Bind(wx.EVT_BUTTON, lambda _event: self._on_copy())

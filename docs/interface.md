@@ -522,7 +522,7 @@ Claude are then offered. A provider that was deleted shows as Claude. See `provi
   server"). The same form serves to add and to change a provider. A form that is not valid is asked again with what
   was typed, the key included.
 - **Workspace**: hide the system messages (checked by default): the noise the CLI writes in
-  a session, such as the answer "No response requested." or the summary of a compaction, is not displayed; change the tools only
+  a session, such as the answer "No response requested.", the summary of a compaction or the end of a background task (`<task-notification>`, written by the CLI as a prompt), is not displayed; change the tools only
   in the local file, which is not versioned (unchecked by default, see Workspace settings); *Long
   conversation* (*Do nothing*, *Warn me*, the default, *Compact it automatically*) and its *Threshold,
   in thousands of tokens* (20 to 1000, default 100; greyed with *Do nothing*), see "Long conversation".

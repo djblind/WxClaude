@@ -6,6 +6,10 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Fixed: the end of a task run in the background (a subagent, a command) appeared in the conversation
+  as if you had written it (`<task-notification>…`); it is now hidden with the other system messages.
+- Fixed: the *Close* button of the sign-in dialogs, of the list of changed files and of the table
+  dialog was in English.
 - Fixed: closing WxClaude left in LM Studio the models it had loaded, and they kept the graphics
   card. WxClaude now unloads, when it closes, the models of LM Studio it used; a model you loaded
   yourself and WxClaude never used stays.

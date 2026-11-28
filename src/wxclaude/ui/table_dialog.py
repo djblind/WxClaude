@@ -44,7 +44,7 @@ class TableCellsDialog(wx.Dialog):
         sizer.Add(self._cell, 0, wx.EXPAND | wx.ALL, 8)
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         buttons.Add(wx.Button(self, wx.ID_COPY, _("Copy the &table")), 0, wx.RIGHT, 6)
-        buttons.Add(wx.Button(self, wx.ID_CLOSE), 0)
+        buttons.Add(wx.Button(self, wx.ID_CLOSE, _("&Close")), 0)
         sizer.Add(buttons, 0, wx.ALL, 8)
         self.SetSizerAndFit(sizer)
         self.SetEscapeId(wx.ID_CLOSE)

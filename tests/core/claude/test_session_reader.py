@@ -220,3 +220,9 @@ def test_the_last_agent_is_the_one_of_the_last_answer(tmp_path: Path) -> None:
         model="claude-opus-5-5", effort="high", permission_mode="plan"
     )
     assert read_session(_write(tmp_path / "t.jsonl", [_user("x")])).last_agent == Agent()
+
+
+def test_the_end_of_a_background_task_is_not_a_prompt_of_the_user(tmp_path: Path) -> None:
+    notice = "<task-notification> <task-id>a1</task-id> <status>completed</status>"
+    session = read_session(_write(tmp_path / "s.jsonl", [_user(notice), _user("Hello")]))
+    assert [m.hidden for m in session.messages] == [True, False]

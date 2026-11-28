@@ -16,6 +16,14 @@ from wxclaude.core.errors import SessionReadError
 
 _NOISE_ANSWER = "No response requested."
 _NOISE_PROMPT = "continue"
+#: What Claude Code writes in the session as a prompt of the user, but is not: the end of a task
+#: that ran in the background (a subagent, a command) told to Claude.
+_NOTICE_PREFIXES = ("<task-notification>",)
+
+
+def _is_noise_prompt(text: str) -> bool:
+    """Is this "prompt" noise of the CLI rather than something the user wrote?"""
+    return text.lower() == _NOISE_PROMPT or text.lstrip().startswith(_NOTICE_PREFIXES)
 
 
 @dataclass(slots=True)
@@ -140,7 +148,7 @@ class _Builder:
                 id=str(entry.get("uuid") or len(self.session.messages)),
                 role=Role.USER,
                 text=text,
-                hidden=text.lower() == _NOISE_PROMPT or bool(entry.get("isCompactSummary")),
+                hidden=_is_noise_prompt(text) or bool(entry.get("isCompactSummary")),
             )
         )
 

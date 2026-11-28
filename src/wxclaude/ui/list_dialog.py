@@ -12,6 +12,7 @@ import wx
 
 from wxclaude.core.labels import accessible_name
 from wxclaude.core.list_spec import ListSpec
+from wxclaude.i18n import _
 
 
 class ListDialog(wx.Dialog):
@@ -62,7 +63,7 @@ class ListDialog(wx.Dialog):
         buttons = wx.BoxSizer(wx.HORIZONTAL)
         for identifier, action_label in actions:
             buttons.Add(wx.Button(self, identifier, action_label), 0, wx.RIGHT, 6)
-        buttons.Add(wx.Button(self, wx.ID_CLOSE), 0)
+        buttons.Add(wx.Button(self, wx.ID_CLOSE, _("&Close")), 0)
         sizer.Add(buttons, 0, wx.ALL, 8)
         self.SetSizerAndFit(sizer)
         self.SetEscapeId(wx.ID_CLOSE)
