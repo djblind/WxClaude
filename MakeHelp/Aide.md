@@ -152,6 +152,12 @@ Pendant que vous êtes dans ce champ, dans une fenêtre comme les Préférences 
 Il est vidé à chaque message envoyé. Il ne coûte aucun token : WxClaude reçoit déjà tout cela.
 Les réflexions de Claude n'y sont pas, car Claude Code n'en donne pas le texte.
 
+#### Suivre un fichier
+
+Un long travail qui tourne sans Claude (une compilation, un banc d'essai, une traduction lancée à part) écrit souvent ce qu'il fait dans un fichier journal.
+Outils > Suivre un fichier… : choisissez ce fichier ; ses 5 dernières lignes, puis chaque nouvelle ligne, s'affichent dans le champ Activité, précédées du nom du fichier.
+Vous pouvez suivre plusieurs fichiers. Outils > Arrêter le suivi des fichiers arrête tout. Cela ne coûte aucun token.
+
 ### Barre d'état
 
 La barre d'état a trois zones. Elle ne prend pas le focus : utilisez la commande de votre lecteur d'écran pour la lire.

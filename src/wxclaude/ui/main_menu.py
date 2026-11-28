@@ -68,6 +68,8 @@ class MenuHandlers:
     about: Handler
     recent_workspaces: Callable[[], list[str]]
     open_recent: Callable[[str], None]
+    follow_file: Handler = lambda _event: None  # Tools > Follow a file
+    stop_following: Handler = lambda _event: None
 
 
 class MainMenu:
@@ -192,6 +194,8 @@ class MainMenu:
             MenuEntry(_("Pla&n…"), h.plans, needs=Needs.CONVERSATION),
             MenuEntry(_("Usage &gauge…"), h.usage, USAGE_COMMAND, key="usage"),
             MenuEntry(_("Sign &in to Claude…"), h.sign_in),
+            MenuEntry(_("Follo&w a file…"), h.follow_file),
+            MenuEntry(_("Stop f&ollowing the files"), h.stop_following),
             MenuEntry(
                 _("Open the workspace &folder"), h.open_workspace_folder, needs=Needs.WORKSPACE
             ),

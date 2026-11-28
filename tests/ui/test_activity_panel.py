@@ -1,5 +1,6 @@
 import time
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 import wx
@@ -79,3 +80,18 @@ def test_the_frequent_progress_is_spoken_once_every_five_seconds_and_not_in_a_di
     view.say(Announce.CLAUDE_THINKING, name="Claude")
     dialog.Destroy()
     assert spoken[-1] is Announce.CLAUDE_USING_TOOL  # nothing spoken in the dialog
+
+
+def test_a_followed_file_writes_in_the_activity(
+    window: MainWindow, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    log = tmp_path / "bench.log"
+    log.write_text("ready\n", encoding="utf-8")
+    view = window._follow._view
+    monkeypatch.setattr(view, "choose_file", lambda folder: log)
+    window._follow.follow()
+    with log.open("a", encoding="utf-8") as handle:
+        handle.write("step 2\n")
+    window._follow.tick()
+    assert window._activity.text == "bench.log: ready\nbench.log: step 2"
+    window._follow.stop()

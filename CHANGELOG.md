@@ -6,6 +6,9 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Added: *Tools > Follow a file…* shows in the Activity field the new lines of a file, such as the
+  log of a long work that runs without Claude (a build, a test bench, a translation). It costs no
+  token; *Stop following the files* ends it.
 - Fixed: the end of a task run in the background (a subagent, a command) appeared in the conversation
   as if you had written it (`<task-notification>…`); it is now hidden with the other system messages.
 - Fixed: the *Close* button of the sign-in dialogs, of the list of changed files and of the table

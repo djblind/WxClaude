@@ -25,6 +25,15 @@
   conversation: the subagent gives its result to Claude. The name is the one of the provider of the
   agent, as in the announcements. Nothing is said: the field is read when the user goes to it; a line
   added never moves the focus nor the caret.
+- **Following a file** (*Tools > Follow a file…*, *Stop following the files*): for a long work that
+  runs without Claude (a build, a test bench, a translation started apart), the new lines of the files
+  the user chooses go to the Activity field, named after their file (`work.log: [12/43] lot`). The
+  choice starts in the workspace. The first look gives the last 5 lines of the file, then a look every
+  second gives the whole lines added (a line still being written waits for its end); a file emptied or
+  replaced is read again from its start, a file that is not there (yet) gives nothing. Several files
+  can be followed; the same file twice is said ("work.log is already followed."). Nothing is spoken
+  but the start and the stop; no token is spent. Closing the window stops it
+  (`core/file_follower.py`, `presenters/file_follow_presenter.py`).
 - **Progress spoken with care** (`ui/run_view.py`): during a long work the progress (category
   "Progress of Claude") comes many times a minute and cut the screen reader everywhere, the
   Preferences included. It is now spoken only while the focus is in the main window and not in the

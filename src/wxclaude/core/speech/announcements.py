@@ -188,6 +188,10 @@ class Announce(enum.Enum):
 
     NO_CONVERSATION = (None, N_("No conversation in this workspace."))
     DETAILS_COPIED = (None, N_("Details copied."))
+    FILE_FOLLOWED = (None, N_("{file} followed: its new lines go to the Activity field."))
+    FILE_ALREADY_FOLLOWED = (None, N_("{file} is already followed."))
+    FILES_NO_LONGER_FOLLOWED = (None, N_("Files no longer followed."))
+    NO_FILE_FOLLOWED = (None, N_("No file is followed."))
     FOLDER_RESTRICTED = (SECURITY, N_("Folder not trusted: restricted mode."))
     FOLDER_APPROVED = (SECURITY, N_("Folder approved: Claude uses its settings."))
     FOLDER_CHANGED = (SECURITY, N_("A watched file changed: {files}."))

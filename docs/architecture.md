@@ -94,6 +94,7 @@ Grouped by subject (`working-rules.md`: split by subject, not by technical kind)
 | `permissions.py` | The answer to a permission question (`Decision`, `Choice`) and the text that describes a request. |
 | `progress.py` | What is said while a turn runs, and how it ended (the notice `unrecognized_model` of the CLI is not taken for the cause of a failure). |
 | `usage.py` | `UsageTracker`: subscription gauges (`gauge_lines`) and tokens / cost spent (`statistics_lines`), as lines of the dialogs, and the size of the conversation (`long`). |
+| `file_follower.py` (in `core/`) | `FileFollower`: the whole lines a file got since the last look (the last 5 at the first one), for Tools > Follow a file. |
 | `activity.py` | `ActivityLog`: the lines of the Activity field, one per tool, text or failure of the run, with the subagent that does it (by the call of its `Agent` tool). |
 | `subagents.py` | `SUBAGENTS`: the subagents WxClaude gives Claude (`lecteur` on Haiku, `executant` on Sonnet), and the `--agents` argument of the CLI. |
 | `long_conversation.py` | `LongConversationWatch`: the size of the conversation and what to do once a message is over (nothing, warn once, compact), by the settings. |

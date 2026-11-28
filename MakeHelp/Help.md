@@ -154,6 +154,12 @@ While you are in this field, in a dialog such as the Preferences or in another a
 It is emptied at each message sent. It costs no token: WxClaude receives all this anyway.
 The thinking of Claude is not there, because Claude Code does not give its text.
 
+#### Following a file
+
+A long work that runs without Claude (a build, a test bench, a translation started apart) often writes what it does in a log file.
+Tools > Follow a file…: choose that file; its last 5 lines, then each new line, show in the Activity field, after the name of the file.
+You can follow several files. Tools > Stop following the files stops everything. It costs no token.
+
 ### Status bar
 
 The status bar has three zones. It does not take the focus: use the command of your screen reader to read it.

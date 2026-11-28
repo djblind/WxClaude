@@ -2253,3 +2253,30 @@ msgstr "Garder la conversation"
 
 msgid "&Give Claude cheaper subagents (reader on Haiku, worker on Sonnet)"
 msgstr "&Donner à Claude des sous-agents moins chers (lecteur sur Haiku, exécutant sur Sonnet)"
+
+msgid "{file} followed: its new lines go to the Activity field."
+msgstr "{file} suivi : ses nouvelles lignes vont dans le champ Activité."
+
+msgid "{file} is already followed."
+msgstr "{file} est déjà suivi."
+
+msgid "Files no longer followed."
+msgstr "Fichiers plus suivis."
+
+msgid "No file is followed."
+msgstr "Aucun fichier n'est suivi."
+
+msgid "Follo&w a file…"
+msgstr "&Suivre un fichier…"
+
+msgid "Stop f&ollowing the files"
+msgstr "&Arrêter le suivi des fichiers"
+
+msgid "Choose the file to follow"
+msgstr "Choisir le fichier à suivre"
+
+msgid "Logs (*.log;*.txt)|*.log;*.txt|All files (*.*)|*.*"
+msgstr "Journaux (*.log;*.txt)|*.log;*.txt|Tous les fichiers (*.*)|*.*"
+
+msgid "{file}: {line}"
+msgstr "{file} : {line}"

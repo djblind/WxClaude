@@ -18,6 +18,7 @@ from wxclaude.core.security.vault import DpapiVault
 from wxclaude.i18n import _
 from wxclaude.presenters.claude_check import ClaudeCheck
 from wxclaude.presenters.conversation_presenter import ConversationLinks, ConversationPresenter
+from wxclaude.presenters.file_follow_presenter import FileFollowPresenter
 from wxclaude.presenters.file_presenter import FilePresenter
 from wxclaude.presenters.message_presenter import MessagePresenter
 from wxclaude.presenters.remote_presenter import RemoteLinks
@@ -37,6 +38,7 @@ from wxclaude.ui.conversation_screen import WxConversationScreen
 from wxclaude.ui.conversation_view import ConversationView
 from wxclaude.ui.display_options import DisplayOptions
 from wxclaude.ui.feedback import Feedback
+from wxclaude.ui.file_follow_view import WxFileFollowView
 from wxclaude.ui.file_view import WxFileView
 from wxclaude.ui.focus_keeper import FocusKeeper
 from wxclaude.ui.gauge_watch import GaugeWatch
@@ -219,6 +221,10 @@ class MainWindow(wx.Frame):
             self._settings.shortcut_for,
         )
         self._prompt = self._prompt_area.field
+        self._follow = FileFollowPresenter(  # Tools > Follow a file, into the Activity field
+            WxFileFollowView(self, self._feedback, self._activity, lambda: self._follow.tick()),
+            lambda: self._workspaces.workspace,
+        )
         self._activity.follow(panel.GetChildren()[-1])  # the last control of the prompt
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -297,6 +303,8 @@ class MainWindow(wx.Frame):
                 preferences=self._on_preferences,
                 show_help=lambda _event: self._files.show_help(self._settings.language),
                 about=lambda _event: self._files.about(),
+                follow_file=lambda _event: self._follow.follow(),
+                stop_following=lambda _event: self._follow.stop(),
                 history=lambda _event: show_history(self, self._feedback),
                 open_log_folder=lambda _event: self._files.open_folder(self._settings.log_dir),
                 recent_workspaces=lambda: self._workspaces.recent(),
@@ -441,6 +449,7 @@ class MainWindow(wx.Frame):
     def _on_close(self, event: wx.CloseEvent) -> None:
         self._closing = True
         self.gauge_watch.stop()
+        self._follow.close()
         self._run.stop()
         if self._remote is not None:
             self._remote.stop()  # the pipe is freed
