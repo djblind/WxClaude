@@ -280,6 +280,12 @@ kept in `core/config/local_servers.py`: the method of LM Studio stops them befor
 and they are stopped when WxClaude ends (`atexit`). A server the user started by hand is never
 stopped. The model name of the provider is the `--alias` of the command.
 
+**When WxClaude ends**, the models of LM Studio it prepared for a message (loaded, or found loaded
+and used) are unloaded, so that nothing holds the graphics card once it is gone: `atexit`,
+`unload_used_models` in `core/config/model_loading.py`, 5 seconds at most per call, LM Studio not
+started for it, an error ignored (nobody is left to tell). A model the user loaded in LM Studio and
+WxClaude never used stays loaded.
+
 This runs in the thread of the message (`ClaudeRunner._prepare`): the interface says *Not enough memory:
 unloading …* and *Loading the model …, please wait* (progress announcements), Interrupt stops the
 message before the CLI starts (a load already asked of LM Studio goes on), and a failure ends the

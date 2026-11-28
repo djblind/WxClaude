@@ -16,12 +16,14 @@ models are unloaded: that is what the scripts always did. Everything here runs a
 thread (it can take minutes) and never imports ``wx``.
 """
 
+import atexit
 import ctypes
 import json
 import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -46,6 +48,7 @@ LM_STUDIO_ADDRESS = (
 UNLOADING = "unload"  # the steps told while a model is prepared
 LOADING = "load"
 LIST_TIMEOUT_SECONDS = 15.0
+_EXIT_TIMEOUT_SECONDS = 5.0  # when WxClaude ends: it must not hang
 LOAD_TIMEOUT_SECONDS = 900.0  # a big model read from the disk takes minutes
 _COMMAND_TIMEOUT_SECONDS = 120.0
 _POLL_SECONDS = 1.0
@@ -268,6 +271,8 @@ class LmStudioLoading(LoadingMethod):
         self._memory = memory
         self._estimate = estimate
         self._start_server = start_server
+        self._used: set[tuple[str, str]] = set()  # (address, model) prepared for a message
+        self._used_lock = threading.Lock()
 
     def prepare(
         self,
@@ -279,6 +284,8 @@ class LmStudioLoading(LoadingMethod):
     ) -> None:
         local_servers.stop_servers(lambda names: report(UNLOADING, names))  # they hold the card
         origin = origin_of(base_url)
+        with self._used_lock:
+            self._used.add((origin, model))  # unloaded when WxClaude ends (``unload_used``)
         loaded = self.loaded(origin)
         same = [entry for entry in loaded if model in (entry.key, entry.instance_id)]
         if any(context_length in (None, entry.context_length) for entry in same):
@@ -310,7 +317,33 @@ class LmStudioLoading(LoadingMethod):
             data = self._call(origin, "/api/v1/models", None, LIST_TIMEOUT_SECONDS, "")
         return _loaded_models(data)
 
+    def unload_used(self) -> list[str]:
+        """Unload the models this method prepared for a message, wherever LM Studio still holds
+        them: WxClaude ends, and a model must not hold the graphics card once it is gone. The
+        server is not started for it. The names of the models unloaded."""
+        with self._used_lock:
+            used = sorted(self._used)
+            self._used.clear()
+        names: list[str] = []
+        for origin in dict.fromkeys(address for address, _model in used):
+            models = {model for address, model in used if address == origin}
+            try:
+                mine = [
+                    entry
+                    for entry in self._loaded_without_start(origin)
+                    if entry.key in models or entry.instance_id in models
+                ]
+                self.unload_all(origin, mine)
+            except ModelLoadError:
+                continue  # LM Studio is gone or refuses: nobody is left to be told
+            names.extend(entry.key for entry in mine)
+        return names
+
     # -- inside ---------------------------------------------------------------------------
+
+    def _loaded_without_start(self, origin: str) -> list[LoadedModel]:
+        """The models LM Studio holds, without starting its server when it does not answer."""
+        return _loaded_models(self._call(origin, "/api/v1/models", None, _EXIT_TIMEOUT_SECONDS, ""))
 
     def _fits(self, model: str, context_length: int | None) -> bool:
         """Is there room for ``model`` next to what is loaded? No when it cannot be known."""
@@ -475,6 +508,19 @@ class LlamaServerLoading(LoadingMethod):
 
 #: The methods, in the order of the list of the form. A method is added here.
 LOADING_METHODS: tuple[LoadingMethod, ...] = (NoLoading(), LmStudioLoading(), LlamaServerLoading())
+
+
+def unload_used_models() -> list[str]:
+    """Unload from LM Studio the models WxClaude prepared (the methods of the registry only, never
+    those of the tests); called when WxClaude ends."""
+    names: list[str] = []
+    for method in LOADING_METHODS:
+        if isinstance(method, LmStudioLoading):
+            names.extend(method.unload_used())
+    return names
+
+
+atexit.register(unload_used_models)  # closing WxClaude frees the graphics card
 
 
 def loading_method(identifier: str) -> LoadingMethod:

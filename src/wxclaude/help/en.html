@@ -208,6 +208,7 @@ The first message after a change of model therefore waits for the loading, which
 <li>The names of the models of the provider are the names in LM Studio, for example <code>qwen3.5-122b-a10b-claudecode</code>.</li>
 <li>The variable <code>CLAUDE_CODE_MAX_CONTEXT_TOKENS</code> of the provider gives the size of the context the model is loaded with, for example 131072.</li>
 <li>If the server of LM Studio does not answer, WxClaude starts it.</li>
+<li>When you close WxClaude, it unloads from LM Studio the models it used, to free the graphics card. A model you loaded yourself and WxClaude never used stays loaded.</li>
 </ul>
 <h4>A model served by llama.cpp</h4>
 <p>Some models do not open in LM Studio yet and run with the server of llama.cpp (<code>llama-server</code>).

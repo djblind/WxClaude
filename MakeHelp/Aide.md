@@ -254,6 +254,7 @@ Le premier message après un changement de modèle attend donc le chargement, qu
 - Les noms des modèles du fournisseur sont les noms de LM Studio, par exemple `qwen3.5-122b-a10b-claudecode`.
 - La variable `CLAUDE_CODE_MAX_CONTEXT_TOKENS` du fournisseur donne la taille du contexte avec laquelle le modèle est chargé, par exemple 131072.
 - Si le serveur de LM Studio ne répond pas, WxClaude le démarre.
+- Quand vous fermez WxClaude, il décharge de LM Studio les modèles qu'il a utilisés, pour libérer la carte graphique. Un modèle que vous avez chargé vous-même et que WxClaude n'a pas utilisé reste chargé.
 
 #### Un modèle servi par llama.cpp
 

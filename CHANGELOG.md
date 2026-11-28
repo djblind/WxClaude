@@ -6,6 +6,9 @@ Every version of WxClaude and what changed in it, newest first. The rules for ve
 
 ## Unreleased
 
+- Fixed: closing WxClaude left in LM Studio the models it had loaded, and they kept the graphics
+  card. WxClaude now unloads, when it closes, the models of LM Studio it used; a model you loaded
+  yourself and WxClaude never used stays.
 - Added: a long conversation taken up more than an hour after its last answer (the cache of Claude
   is gone, so it would cost much) can go on in a new conversation: WxClaude proposes it (or does it
   without asking, as chosen in the Preferences), gives the new conversation the last exchanges of

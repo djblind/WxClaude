@@ -218,3 +218,36 @@ def test_the_registry() -> None:
     assert isinstance(loading_method("unknown"), NoLoading)
     assert not loading_method(NONE).active
     assert isinstance(loading_method("lmstudio"), LmStudioLoading)
+
+
+def test_the_models_used_are_unloaded_when_wxclaude_ends_and_only_them() -> None:
+    server = FakeLmStudio({"small": 4096})
+    loading = method(server)
+    loading.prepare(BASE, "big", 131072, Steps())
+    server.loaded["other"] = 8192  # loaded by the user in LM Studio
+    assert loading.unload_used() == ["big"]
+    assert server.loaded == {"small": 4096, "other": 8192}
+    assert loading.unload_used() == []  # done once
+
+
+def test_a_model_already_loaded_but_used_is_unloaded_too() -> None:
+    server = FakeLmStudio({"big": 131072})
+    loading = method(server)
+    loading.prepare(BASE, "big", 131072, Steps())
+    assert loading.unload_used() == ["big"]
+    assert server.loaded == {}
+
+
+def test_lm_studio_gone_at_the_end_is_not_an_error_and_is_not_started() -> None:
+    server = FakeLmStudio({"big": 131072})
+    started: list[bool] = []
+
+    def start() -> bool:
+        started.append(True)
+        return True
+
+    loading = LmStudioLoading(server, lambda: None, lambda m, c: None, start)
+    loading.prepare(BASE, "big", 131072, Steps())
+    server.down = True
+    assert loading.unload_used() == []
+    assert started == []
